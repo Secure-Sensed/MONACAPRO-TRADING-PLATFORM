@@ -1,0 +1,354 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  DollarSign, 
+  Users, 
+  Copy, 
+  ArrowUpRight,
+  ArrowDownRight,
+  Wallet,
+  Activity
+} from 'lucide-react';
+import { leadTraders, tradingPlans, recentTransactions } from '../data/mockData';
+
+const Dashboard = () => {
+  const navigate = useNavigate();
+  const [portfolio, setPortfolio] = useState({
+    balance: 25000,
+    profit: 3245.50,
+    profitPercentage: 14.89,
+    activeCopies: 3
+  });
+
+  const [cryptoPrices, setCryptoPrices] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const isLoggedIn = localStorage.getItem('isLoggedIn');
+    if (!isLoggedIn) {
+      navigate('/login');
+    }
+    fetchCryptoPrices();
+  }, [navigate]);
+
+  const fetchCryptoPrices = async () => {
+    try {
+      // Fetch real-time crypto prices from CoinGecko
+      const response = await fetch(
+        'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,binancecoin,cardano,solana&vs_currencies=usd&include_24hr_change=true'
+      );
+      const data = await response.json();
+      
+      const prices = [
+        { 
+          name: 'Bitcoin', 
+          symbol: 'BTC', 
+          price: data.bitcoin.usd, 
+          change: data.bitcoin.usd_24h_change 
+        },
+        { 
+          name: 'Ethereum', 
+          symbol: 'ETH', 
+          price: data.ethereum.usd, 
+          change: data.ethereum.usd_24h_change 
+        },
+        { 
+          name: 'BNB', 
+          symbol: 'BNB', 
+          price: data.binancecoin.usd, 
+          change: data.binancecoin.usd_24h_change 
+        },
+        { 
+          name: 'Cardano', 
+          symbol: 'ADA', 
+          price: data.cardano.usd, 
+          change: data.cardano.usd_24h_change 
+        },
+        { 
+          name: 'Solana', 
+          symbol: 'SOL', 
+          price: data.solana.usd, 
+          change: data.solana.usd_24h_change 
+        }
+      ];
+      
+      setCryptoPrices(prices);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching crypto prices:', error);
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('isLoggedIn');
+    navigate('/login');
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-[#0a1628] via-[#0f1f3a] to-[#0a1628] pt-20 pb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-2">Dashboard</h1>
+            <p className="text-gray-400">Welcome back to your trading account</p>
+          </div>
+          <Button 
+            onClick={handleLogout}
+            variant="outline" 
+            className="border-gray-600 text-white hover:bg-white/10"
+          >
+            Logout
+          </Button>
+        </div>
+
+        {/* Portfolio Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-[#1a2942]/80 border-gray-700">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-sm mb-1">Total Balance</p>
+                  <h3 className="text-2xl font-bold text-white">${portfolio.balance.toLocaleString()}</h3>
+                </div>
+                <Wallet className="w-10 h-10 text-cyan-400" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-[#1a2942]/80 border-gray-700">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-sm mb-1">Total Profit</p>
+                  <h3 className="text-2xl font-bold text-green-400">${portfolio.profit.toLocaleString()}</h3>
+                  <p className="text-green-400 text-sm flex items-center mt-1">
+                    <TrendingUp className="w-4 h-4 mr-1" />
+                    +{portfolio.profitPercentage}%
+                  </p>
+                </div>
+                <DollarSign className="w-10 h-10 text-green-400" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-[#1a2942]/80 border-gray-700">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-sm mb-1">Active Copies</p>
+                  <h3 className="text-2xl font-bold text-white">{portfolio.activeCopies}</h3>
+                </div>
+                <Copy className="w-10 h-10 text-blue-400" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-[#1a2942]/80 border-gray-700">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-sm mb-1">Total Trades</p>
+                  <h3 className="text-2xl font-bold text-white">148</h3>
+                </div>
+                <Activity className="w-10 h-10 text-purple-400" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main Content */}
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="bg-[#1a2942]/80 border border-gray-700">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-cyan-400/20 data-[state=active]:text-cyan-400">Overview</TabsTrigger>
+            <TabsTrigger value="copytrading" className="data-[state=active]:bg-cyan-400/20 data-[state=active]:text-cyan-400">Copy Trading</TabsTrigger>
+            <TabsTrigger value="markets" className="data-[state=active]:bg-cyan-400/20 data-[state=active]:text-cyan-400">Markets</TabsTrigger>
+            <TabsTrigger value="transactions" className="data-[state=active]:bg-cyan-400/20 data-[state=active]:text-cyan-400">Transactions</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* Active Traders */}
+              <Card className="bg-[#1a2942]/80 border-gray-700">
+                <CardHeader>
+                  <CardTitle className="text-white">Traders You're Copying</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {leadTraders.slice(0, 3).map((trader) => (
+                    <div key={trader.id} className="flex items-center justify-between p-4 bg-[#0a1628]/50 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <img src={trader.image} alt={trader.name} className="w-12 h-12 rounded-full" />
+                        <div>
+                          <h4 className="text-white font-semibold">{trader.name}</h4>
+                          <p className="text-gray-400 text-sm">Win Rate: {trader.winRate}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-green-400 font-bold">{trader.profit}</p>
+                        <p className="text-gray-400 text-sm">{trader.followers} followers</p>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              {/* Recent Activity */}
+              <Card className="bg-[#1a2942]/80 border-gray-700">
+                <CardHeader>
+                  <CardTitle className="text-white">Recent Activity</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {recentTransactions.map((transaction) => (
+                    <div key={transaction.id} className="flex items-center justify-between p-4 bg-[#0a1628]/50 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        {transaction.type === 'deposit' && <ArrowDownRight className="w-8 h-8 text-green-400" />}
+                        {transaction.type === 'withdrawal' && <ArrowUpRight className="w-8 h-8 text-red-400" />}
+                        {transaction.type === 'trade' && <Activity className="w-8 h-8 text-blue-400" />}
+                        <div>
+                          <h4 className="text-white font-semibold capitalize">{transaction.type}</h4>
+                          <p className="text-gray-400 text-sm">{transaction.method || transaction.asset}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-bold ${transaction.type === 'deposit' ? 'text-green-400' : transaction.type === 'withdrawal' ? 'text-red-400' : 'text-blue-400'}`}>
+                          ${transaction.amount}
+                        </p>
+                        <p className="text-gray-400 text-sm capitalize">{transaction.status}</p>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="copytrading" className="space-y-6">
+            <Card className="bg-[#1a2942]/80 border-gray-700">
+              <CardHeader>
+                <CardTitle className="text-white">Top Lead Traders</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-6">
+                  {leadTraders.map((trader) => (
+                    <div key={trader.id} className="p-6 bg-[#0a1628]/50 rounded-lg border border-gray-700 hover:border-cyan-400/50 transition-all">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center space-x-3">
+                          <img src={trader.image} alt={trader.name} className="w-16 h-16 rounded-full" />
+                          <div>
+                            <h4 className="text-white font-bold text-lg">{trader.name}</h4>
+                            <p className="text-gray-400 text-sm">Risk: {trader.risk}</p>
+                          </div>
+                        </div>
+                        <span className="px-3 py-1 bg-green-400/20 text-green-400 rounded-full text-sm font-semibold">
+                          {trader.profit}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4 mb-4">
+                        <div>
+                          <p className="text-gray-400 text-xs">Followers</p>
+                          <p className="text-white font-semibold">{trader.followers}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-400 text-xs">Trades</p>
+                          <p className="text-white font-semibold">{trader.trades}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-400 text-xs">Win Rate</p>
+                          <p className="text-white font-semibold">{trader.winRate}</p>
+                        </div>
+                      </div>
+                      <Button className="w-full bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white">
+                        Copy Trader
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="markets" className="space-y-6">
+            <Card className="bg-[#1a2942]/80 border-gray-700">
+              <CardHeader>
+                <CardTitle className="text-white">Live Cryptocurrency Prices</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <p className="text-gray-400 text-center py-8">Loading prices...</p>
+                ) : (
+                  <div className="space-y-3">
+                    {cryptoPrices.map((crypto) => (
+                      <div key={crypto.symbol} className="flex items-center justify-between p-4 bg-[#0a1628]/50 rounded-lg">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full flex items-center justify-center">
+                            <span className="text-white font-bold text-sm">{crypto.symbol.substring(0, 2)}</span>
+                          </div>
+                          <div>
+                            <h4 className="text-white font-semibold">{crypto.name}</h4>
+                            <p className="text-gray-400 text-sm">{crypto.symbol}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-white font-bold text-lg">${crypto.price.toLocaleString()}</p>
+                          <p className={`text-sm flex items-center justify-end ${crypto.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {crypto.change >= 0 ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
+                            {Math.abs(crypto.change).toFixed(2)}%
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="transactions" className="space-y-6">
+            <Card className="bg-[#1a2942]/80 border-gray-700">
+              <CardHeader>
+                <CardTitle className="text-white">Transaction History</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {recentTransactions.map((transaction) => (
+                    <div key={transaction.id} className="flex items-center justify-between p-4 bg-[#0a1628]/50 rounded-lg border border-gray-700">
+                      <div className="flex items-center space-x-4">
+                        {transaction.type === 'deposit' && <ArrowDownRight className="w-10 h-10 text-green-400" />}
+                        {transaction.type === 'withdrawal' && <ArrowUpRight className="w-10 h-10 text-red-400" />}
+                        {transaction.type === 'trade' && <Activity className="w-10 h-10 text-blue-400" />}
+                        <div>
+                          <h4 className="text-white font-semibold capitalize">{transaction.type}</h4>
+                          <p className="text-gray-400 text-sm">
+                            {transaction.method || transaction.asset} • {new Date(transaction.date).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-lg font-bold ${transaction.type === 'deposit' ? 'text-green-400' : transaction.type === 'withdrawal' ? 'text-red-400' : 'text-blue-400'}`}>
+                          {transaction.type === 'deposit' ? '+' : '-'}${transaction.amount}
+                        </p>
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          transaction.status === 'completed' ? 'bg-green-400/20 text-green-400' : 'bg-yellow-400/20 text-yellow-400'
+                        }`}>
+                          {transaction.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;
