@@ -362,6 +362,14 @@ const Dashboard = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Copy Trader Dialog */}
+        <CopyTraderDialog
+          trader={selectedTrader}
+          isOpen={showCopyDialog}
+          onClose={() => setShowCopyDialog(false)}
+          userBalance={portfolio.balance}
+        />
       </div>
     </div>
   );
