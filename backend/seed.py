@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-\"\"\"Seed database with initial data\"\"\"\nimport asyncio
+"""Seed database with initial data"""
+import asyncio
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 from datetime import datetime, timezone
