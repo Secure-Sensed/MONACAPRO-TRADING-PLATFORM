@@ -226,7 +226,7 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {leadTraders.slice(0, 3).map((trader) => (
-                    <div key={trader.id} className="flex items-center justify-between p-4 bg-[#0a1628]/50 rounded-lg">
+                    <div key={trader.trader_id} className="flex items-center justify-between p-4 bg-[#0a1628]/50 rounded-lg">
                       <div className="flex items-center space-x-3">
                         <img src={trader.image} alt={trader.name} className="w-12 h-12 rounded-full" />
                         <div>
