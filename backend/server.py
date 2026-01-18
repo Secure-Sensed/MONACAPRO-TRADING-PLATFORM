@@ -550,15 +550,38 @@ async def get_admin_stats(request: Request, session_token: Optional[str] = Cooki
 # Include the router in the main app
 app.include_router(api_router)
 
-# CORS Configuration - Allow specific origins with credentials
+# HEALTH CHECK ENDPOINT (for Kubernetes probes)
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for Kubernetes liveness/readiness probes"""
+    try:
+        # Check MongoDB connection
+        await db.command('ping')
+        return {
+            'status': 'healthy',
+            'service': 'monacaptradingpro-backend',
+            'database': 'connected'
+        }
+    except Exception as e:
+        logger.error(f"Health check failed: {str(e)}")
+        return {
+            'status': 'unhealthy',
+            'service': 'monacaptradingpro-backend',
+            'database': 'disconnected',
+            'error': str(e)
+        }
+
+# CORS Configuration - Read from environment
+cors_origins = os.getenv('CORS_ORIGINS', '*')
+if cors_origins == '*':
+    origins_list = ['*']
+else:
+    origins_list = [origin.strip() for origin in cors_origins.split(',')]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=[
-        "http://localhost:3000",
-        "https://monca-trading-clone.preview.emergentagent.com",
-        "https://*.emergentagent.com"
-    ],
+    allow_credentials=True if cors_origins != '*' else False,
+    allow_origins=origins_list,
     allow_methods=["*"],
     allow_headers=["*"],
 )
