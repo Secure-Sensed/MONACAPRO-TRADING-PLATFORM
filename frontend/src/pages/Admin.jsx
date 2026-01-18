@@ -239,13 +239,10 @@ const Admin = () => {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-4xl font-bold text-white mb-2">Admin Dashboard</h1>
-            <p className="text-gray-400">Manage your trading platform</p>
+            <p className="text-gray-400">Welcome, {user?.full_name} ({user?.username})</p>
           </div>
           <Button 
-            onClick={() => {
-              localStorage.removeItem('isAdmin');
-              navigate('/');
-            }}
+            onClick={handleLogout}
             variant="outline" 
             className="border-gray-600 text-white hover:bg-white/10"
           >
