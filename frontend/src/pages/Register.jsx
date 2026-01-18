@@ -44,7 +44,7 @@ const Register = () => {
     if (result.success) {
       toast({
         title: 'Registration Successful',
-        description: 'Welcome to Moncaplus!'
+        description: 'Welcome to Monacap Trading Pro!'
       });
       navigate('/dashboard');
     } else {
