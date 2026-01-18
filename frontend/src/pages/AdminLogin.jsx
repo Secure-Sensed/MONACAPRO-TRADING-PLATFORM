@@ -81,13 +81,13 @@ const AdminLogin = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-300">Admin Email</Label>
+              <Label htmlFor="username" className="text-gray-300">Admin Username</Label>
               <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="Enter admin email"
-                value={formData.email}
+                id="username"
+                name="username"
+                type="text"
+                placeholder="Enter admin username"
+                value={formData.username}
                 onChange={handleChange}
                 required
                 className="bg-[#0a1628] border-gray-600 text-white placeholder:text-gray-500"
@@ -108,16 +108,19 @@ const AdminLogin = () => {
             </div>
             <Button
               type="submit"
+              disabled={isLoading}
               className="w-full bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white transition-all"
             >
-              Login as Admin
+              {isLoading ? 'Logging in...' : 'Login as Admin'}
             </Button>
           </form>
 
           <div className="mt-6 p-4 bg-cyan-400/10 border border-cyan-400/30 rounded-lg">
-            <p className="text-cyan-400 text-sm font-semibold mb-2">Demo Credentials:</p>
-            <p className="text-gray-400 text-xs">Email: admin@moncaplus.com</p>
-            <p className="text-gray-400 text-xs">Password: admin123</p>
+            <p className="text-cyan-400 text-sm font-semibold mb-2">Admin Credentials:</p>
+            <div className="space-y-1">
+              <p className="text-gray-400 text-xs">Username: admin | Password: admin0123</p>
+              <p className="text-gray-400 text-xs">Username: addmin | Password: admin0123</p>
+            </div>
           </div>
         </CardContent>
       </Card>
