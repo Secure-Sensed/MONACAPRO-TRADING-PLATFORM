@@ -5,15 +5,18 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { toast } from '../hooks/use-toast';
+import { useAuth } from '../context/AuthContext';
 
 const Register = () => {
   const navigate = useNavigate();
+  const { register } = useAuth();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     password: '',
     confirmPassword: ''
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -22,7 +25,7 @@ const Register = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (formData.password !== formData.confirmPassword) {
@@ -34,21 +37,31 @@ const Register = () => {
       return;
     }
     
-    // MOCKED: Will be replaced with actual API call
-    localStorage.setItem('isLoggedIn', 'true');
-    toast({
-      title: 'Registration Successful',
-      description: 'Welcome to Moncaplus!'
-    });
-    navigate('/dashboard');
+    setIsLoading(true);
+    
+    const result = await register(formData.fullName, formData.email, formData.password);
+    
+    if (result.success) {
+      toast({
+        title: 'Registration Successful',
+        description: 'Welcome to Moncaplus!'
+      });
+      navigate('/dashboard');
+    } else {
+      toast({
+        title: 'Registration Failed',
+        description: result.error || 'Please try again',
+        variant: 'destructive'
+      });
+    }
+    
+    setIsLoading(false);
   };
 
   const handleGoogleSignup = () => {
-    // MOCKED: Will be replaced with Emergent Google Auth
-    toast({
-      title: 'Google Signup',
-      description: 'Google authentication will be integrated with backend'
-    });
+    // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+    const redirectUrl = window.location.origin + '/dashboard';
+    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
   };
 
   return (
