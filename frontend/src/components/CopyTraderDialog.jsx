@@ -117,16 +117,28 @@ const CopyTraderDialog = ({ trader, isOpen, onClose, userBalance = 0 }) => {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-[#1a2942] border-gray-700 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl flex items-center space-x-3">
-            <img src={trader.image} alt={trader.name} className="w-12 h-12 rounded-full" />
-            <div>
-              <span>{trader.name}</span>
-              <span className="ml-3 text-green-400 text-lg">{trader.profit}</span>
+          <DialogTitle className="text-2xl flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <img src={trader.image} alt={trader.name} className="w-12 h-12 rounded-full" />
+              <div className="flex items-center space-x-2">
+                <span>{trader.name}</span>
+                <span className="text-green-400 text-lg">{trader.profit}</span>
+              </div>
             </div>
+            <motion.div
+              className="flex items-center space-x-2 bg-cyan-400/10 px-3 py-1.5 rounded-full"
+              animate={{
+                scale: [1, 1.05, 1],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+              }}
+            >
+              <Copy className="w-5 h-5 text-cyan-400" />
+              <span className="text-cyan-400 text-sm font-semibold">Auto-Copy</span>
+            </motion.div>
           </DialogTitle>
-          <DialogDescription className="text-gray-400">
-            Copy this trader's strategies automatically
-          </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="deposit" className="mt-4">
