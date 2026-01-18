@@ -305,7 +305,7 @@ const Dashboard = () => {
                         </div>
                         <div>
                           <p className="text-gray-400 text-xs">Win Rate</p>
-                          <p className="text-white font-semibold">{trader.winRate}</p>
+                          <p className="text-white font-semibold">{trader.win_rate}</p>
                         </div>
                       </div>
                       <Button className="w-full bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white">
