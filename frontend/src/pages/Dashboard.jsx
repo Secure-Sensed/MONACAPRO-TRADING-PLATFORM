@@ -16,6 +16,7 @@ import {
   Activity
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import CopyTraderDialog from '../components/CopyTraderDialog';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL + '/api';
 
@@ -33,6 +34,13 @@ const Dashboard = () => {
   const [leadTraders, setLeadTraders] = useState([]);
   const [cryptoPrices, setCryptoPrices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTrader, setSelectedTrader] = useState(null);
+  const [showCopyDialog, setShowCopyDialog] = useState(false);
+
+  const handleCopyTrader = (trader) => {
+    setSelectedTrader(trader);
+    setShowCopyDialog(true);
+  };
 
   useEffect(() => {
     fetchDashboardData();
