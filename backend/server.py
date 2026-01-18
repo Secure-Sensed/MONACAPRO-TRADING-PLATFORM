@@ -330,6 +330,139 @@ async def get_plans():
         'plans': plans
     }
 
+# PASSWORD CHANGE
+
+@api_router.post("/auth/change-password")
+async def change_password(request: Request, session_token: Optional[str] = Cookie(None)):
+    """Change user password"""
+    user = await get_current_user(request, session_token, db)
+    body = await request.json()
+    
+    old_password = body.get('old_password')
+    new_password = body.get('new_password')
+    
+    if not old_password or not new_password:
+        raise HTTPException(status_code=400, detail='Old and new passwords required')
+    
+    # Verify old password
+    user_doc = await db.users.find_one({'user_id': user['user_id']})
+    if not verify_password(old_password, user_doc['password']):
+        raise HTTPException(status_code=400, detail='Current password is incorrect')
+    
+    # Update password
+    hashed_pwd = hash_password(new_password)
+    await db.users.update_one(
+        {'user_id': user['user_id']},
+        {'$set': {'password': hashed_pwd}}
+    )
+    
+    return {'success': True, 'message': 'Password changed successfully'}
+
+# WALLET ADDRESSES
+
+@api_router.get("/wallets")
+async def get_wallets():
+    """Get all deposit wallet addresses"""
+    wallets = get_all_wallets()
+    return {
+        'success': True,
+        'wallets': wallets
+    }
+
+@api_router.get("/wallets/{method}")
+async def get_wallet_by_method(method: str):
+    """Get wallet address for specific payment method"""
+    wallet = get_wallet_address(method)
+    if not wallet:
+        raise HTTPException(status_code=404, detail='Payment method not found')
+    
+    return {
+        'success': True,
+        'method': method,
+        'wallet': wallet
+    }
+
+@api_router.put("/wallets/{method}")
+async def update_wallet(method: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    """Update wallet address (admin only)"""
+    await require_admin(request, session_token, db)
+    
+    body = await request.json()
+    new_address = body.get('address')
+    
+    if not new_address:
+        raise HTTPException(status_code=400, detail='Address required')
+    
+    # Store in database (you can create a wallets collection)
+    await db.wallet_addresses.update_one(
+        {'method': method},
+        {'$set': {'address': new_address, 'updated_at': datetime.now(timezone.utc)}},
+        upsert=True
+    )
+    
+    return {'success': True, 'message': 'Wallet address updated'}
+
+# USER ACCOUNT MANAGEMENT (ADMIN)
+
+@api_router.post("/admin/users/{user_id}/suspend")
+async def suspend_user(user_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    """Suspend/hold user account (admin only)"""
+    await require_admin(request, session_token, db)
+    
+    await db.users.update_one(
+        {'user_id': user_id},
+        {'$set': {'status': 'inactive', 'updated_at': datetime.now(timezone.utc)}}
+    )
+    
+    return {'success': True, 'message': 'User account suspended'}
+
+@api_router.post("/admin/users/{user_id}/activate")
+async def activate_user(user_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    """Activate user account (admin only)"""
+    await require_admin(request, session_token, db)
+    
+    await db.users.update_one(
+        {'user_id': user_id},
+        {'$set': {'status': 'active', 'updated_at': datetime.now(timezone.utc)}}
+    )
+    
+    return {'success': True, 'message': 'User account activated'}
+
+@api_router.get("/admin/users/{user_id}/balance")
+async def get_user_balance(user_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    """Get user wallet balance (admin only)"""
+    await require_admin(request, session_token, db)
+    
+    user = await db.users.find_one({'user_id': user_id}, {'_id': 0, 'password': 0})
+    if not user:
+        raise HTTPException(status_code=404, detail='User not found')
+    
+    return {
+        'success': True,
+        'user_id': user_id,
+        'balance': user['balance'],
+        'email': user['email'],
+        'full_name': user['full_name']
+    }
+
+@api_router.put("/admin/users/{user_id}/balance")
+async def update_user_balance(user_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    """Update user balance (admin only)"""
+    await require_admin(request, session_token, db)
+    
+    body = await request.json()
+    new_balance = body.get('balance')
+    
+    if new_balance is None:
+        raise HTTPException(status_code=400, detail='Balance amount required')
+    
+    await db.users.update_one(
+        {'user_id': user_id},
+        {'$set': {'balance': float(new_balance), 'updated_at': datetime.now(timezone.utc)}}
+    )
+    
+    return {'success': True, 'message': 'Balance updated successfully'}
+
 # TRANSACTIONS
 
 @api_router.get("/transactions")
