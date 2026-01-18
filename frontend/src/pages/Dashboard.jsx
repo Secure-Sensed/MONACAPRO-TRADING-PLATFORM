@@ -231,7 +231,7 @@ const Dashboard = () => {
                         <img src={trader.image} alt={trader.name} className="w-12 h-12 rounded-full" />
                         <div>
                           <h4 className="text-white font-semibold">{trader.name}</h4>
-                          <p className="text-gray-400 text-sm">Win Rate: {trader.winRate}</p>
+                          <p className="text-gray-400 text-sm">Win Rate: {trader.win_rate}</p>
                         </div>
                       </div>
                       <div className="text-right">
