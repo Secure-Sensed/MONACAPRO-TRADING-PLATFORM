@@ -36,7 +36,7 @@ const Login = () => {
     if (result.success) {
       toast({
         title: 'Login Successful',
-        description: 'Welcome back to Moncaplus!'
+        description: 'Welcome back to Monacap Trading Pro!'
       });
       
       // Check if user is admin and redirect accordingly
