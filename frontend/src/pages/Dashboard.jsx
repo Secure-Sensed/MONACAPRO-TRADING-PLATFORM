@@ -344,33 +344,9 @@ const Dashboard = () => {
                 <CardTitle className="text-white">Transaction History</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {recentTransactions.map((transaction) => (
-                    <div key={transaction.id} className="flex items-center justify-between p-4 bg-[#0a1628]/50 rounded-lg border border-gray-700">
-                      <div className="flex items-center space-x-4">
-                        {transaction.type === 'deposit' && <ArrowDownRight className="w-10 h-10 text-green-400" />}
-                        {transaction.type === 'withdrawal' && <ArrowUpRight className="w-10 h-10 text-red-400" />}
-                        {transaction.type === 'trade' && <Activity className="w-10 h-10 text-blue-400" />}
-                        <div>
-                          <h4 className="text-white font-semibold capitalize">{transaction.type}</h4>
-                          <p className="text-gray-400 text-sm">
-                            {transaction.method || transaction.asset} • {new Date(transaction.date).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className={`text-lg font-bold ${transaction.type === 'deposit' ? 'text-green-400' : transaction.type === 'withdrawal' ? 'text-red-400' : 'text-blue-400'}`}>
-                          {transaction.type === 'deposit' ? '+' : '-'}${transaction.amount}
-                        </p>
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          transaction.status === 'completed' ? 'bg-green-400/20 text-green-400' : 'bg-yellow-400/20 text-yellow-400'
-                        }`}>
-                          {transaction.status}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <p className="text-gray-400 text-center py-8">
+                  No transactions to display
+                </p>
               </CardContent>
             </Card>
           </TabsContent>
