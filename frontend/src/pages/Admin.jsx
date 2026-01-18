@@ -133,45 +133,104 @@ const Admin = () => {
     }
   };
 
-  const handleDeleteUser = (userId) => {
-    setUsers(users.filter(u => u.id !== userId));
-    toast({
-      title: 'User Deleted',
-      description: 'User has been removed from the system'
-    });
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm('Are you sure you want to delete this user?')) return;
+    
+    try {
+      await axios.delete(`${API_URL}/users/${userId}`, {
+        withCredentials: true
+      });
+      toast({
+        title: 'User Deleted',
+        description: 'User has been removed from the system'
+      });
+      fetchUsers();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete user',
+        variant: 'destructive'
+      });
+    }
   };
 
-  const handleToggleUserStatus = (userId) => {
-    setUsers(users.map(u => 
-      u.id === userId 
-        ? { ...u, status: u.status === 'active' ? 'inactive' : 'active' }
-        : u
-    ));
-    toast({
-      title: 'Status Updated',
-      description: 'User status has been changed'
-    });
+  const handleToggleUserStatus = async (userId, currentStatus) => {
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    
+    try {
+      await axios.put(`${API_URL}/users/${userId}`, 
+        { status: newStatus },
+        { withCredentials: true }
+      );
+      toast({
+        title: 'Status Updated',
+        description: 'User status has been changed'
+      });
+      fetchUsers();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update user status',
+        variant: 'destructive'
+      });
+    }
   };
 
-  const handleApproveTransaction = (transactionId) => {
-    setTransactions(transactions.map(t =>
-      t.id === transactionId
-        ? { ...t, status: 'completed' }
-        : t
-    ));
-    toast({
-      title: 'Transaction Approved',
-      description: 'Transaction has been processed successfully'
-    });
+  const handleApproveTransaction = async (transactionId) => {
+    try {
+      await axios.put(`${API_URL}/transactions/${transactionId}/approve`, {}, {
+        withCredentials: true
+      });
+      toast({
+        title: 'Transaction Approved',
+        description: 'Transaction has been processed successfully'
+      });
+      fetchTransactions();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to approve transaction',
+        variant: 'destructive'
+      });
+    }
   };
 
-  const handleRejectTransaction = (transactionId) => {
-    setTransactions(transactions.filter(t => t.id !== transactionId));
-    toast({
-      title: 'Transaction Rejected',
-      description: 'Transaction has been cancelled'
-    });
+  const handleRejectTransaction = async (transactionId) => {
+    if (!window.confirm('Are you sure you want to reject this transaction?')) return;
+    
+    try {
+      await axios.put(`${API_URL}/transactions/${transactionId}/reject`, {}, {
+        withCredentials: true
+      });
+      toast({
+        title: 'Transaction Rejected',
+        description: 'Transaction has been cancelled'
+      });
+      fetchTransactions();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to reject transaction',
+        variant: 'destructive'
+      });
+    }
   };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/admin/login');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#0a1628] via-[#0f1f3a] to-[#0a1628] flex items-center justify-center pt-20">
+        <div className="text-white text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mx-auto mb-4"></div>
+          <p className="text-xl">Loading admin panel...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0a1628] via-[#0f1f3a] to-[#0a1628] pt-20 pb-12">
