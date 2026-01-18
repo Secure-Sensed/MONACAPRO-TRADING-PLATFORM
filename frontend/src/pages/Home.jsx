@@ -432,7 +432,7 @@ const Home = () => {
               repeat: Infinity
             }}
           >
-            Start Your Trading Journey with <span className="text-cyan-400">Moncaplus</span>
+            Start Your Trading Journey with <span className="text-cyan-400">Monacap Trading Pro</span>
           </motion.h2>
           <motion.p 
             className="text-xl text-gray-300 mb-8"
