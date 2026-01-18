@@ -31,7 +31,7 @@ const AdminLogin = () => {
     
     try {
       // Login with username (we'll convert to email on backend)
-      const email = `${formData.username}@moncaplus.com`;
+      const email = `${formData.username}@monacaptradingpro.com`;
       const response = await axios.post(`${API_URL}/auth/login`, {
         email: email,
         password: formData.password
