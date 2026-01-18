@@ -73,6 +73,9 @@ async def register(user_data: UserCreate):
     
     await db.users.insert_one(user_doc)
     
+    # Send welcome email
+    await send_welcome_email(user_data.full_name, user_data.email, user_id)
+    
     session_token = generate_session_token()
     session_doc = {
         'user_id': user_id,
