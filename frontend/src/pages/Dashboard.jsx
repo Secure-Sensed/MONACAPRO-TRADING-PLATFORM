@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
@@ -14,27 +15,60 @@ import {
   Wallet,
   Activity
 } from 'lucide-react';
-import { leadTraders, tradingPlans, recentTransactions } from '../data/mockData';
+import { useAuth } from '../context/AuthContext';
+
+const API_URL = process.env.REACT_APP_BACKEND_URL + '/api';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [portfolio, setPortfolio] = useState({
-    balance: 25000,
-    profit: 3245.50,
-    profitPercentage: 14.89,
-    activeCopies: 3
+    balance: 0,
+    profit: 0,
+    profitPercentage: 0,
+    activeCopies: 0,
+    totalTrades: 0
   });
 
+  const [leadTraders, setLeadTraders] = useState([]);
   const [cryptoPrices, setCryptoPrices] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    if (!isLoggedIn) {
-      navigate('/login');
-    }
+    fetchDashboardData();
+    fetchLeadTraders();
     fetchCryptoPrices();
-  }, [navigate]);
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/dashboard/stats`, {
+        withCredentials: true
+      });
+      
+      if (response.data.success) {
+        setPortfolio(response.data.portfolio);
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchLeadTraders = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/traders`, {
+        withCredentials: true
+      });
+      
+      if (response.data.success) {
+        setLeadTraders(response.data.traders);
+      }
+    } catch (error) {
+      console.error('Error fetching traders:', error);
+    }
+  };
 
   const fetchCryptoPrices = async () => {
     try {
