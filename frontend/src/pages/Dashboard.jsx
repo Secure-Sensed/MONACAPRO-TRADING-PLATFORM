@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import CopyTraderDialog from '../components/CopyTraderDialog';
+import RealTimeTradingChart from '../components/RealTimeTradingChart';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL + '/api';
 
