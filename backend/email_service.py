@@ -152,7 +152,8 @@ async def send_welcome_email(user_name: str, user_email: str, user_id: str):
     html_content = template.render(
         user_name=user_name,
         user_email=user_email,
-        user_id=user_id
+        user_id=user_id,
+        app_url=APP_URL
     )
     
     subject = "Welcome to Monacap Trading Pro - Your Account is Ready!"
