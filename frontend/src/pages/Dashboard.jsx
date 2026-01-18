@@ -230,7 +230,7 @@ const Dashboard = () => {
               {/* Active Traders */}
               <Card className="bg-[#1a2942]/80 border-gray-700">
                 <CardHeader>
-                  <CardTitle className="text-white">Traders You're Copying</CardTitle>
+                  <CardTitle className="text-white">Traders You&apos;re Copying</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {leadTraders.slice(0, 3).map((trader) => (
