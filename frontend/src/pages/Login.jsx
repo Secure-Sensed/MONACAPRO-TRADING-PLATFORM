@@ -128,9 +128,10 @@ const Login = () => {
               >
                 <Button
                   type="submit"
+                  disabled={isLoading}
                   className="w-full bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white transition-all shadow-lg shadow-cyan-500/30"
                 >
-                  Login
+                  {isLoading ? 'Logging in...' : 'Login'}
                 </Button>
               </motion.div>
             </form>
