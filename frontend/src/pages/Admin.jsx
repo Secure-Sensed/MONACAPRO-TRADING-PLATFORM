@@ -332,9 +332,9 @@ const Admin = () => {
                   </TableHeader>
                   <TableBody>
                     {users.map((user) => (
-                      <TableRow key={user.id} className="border-gray-700">
-                        <TableCell className="text-white">{user.id}</TableCell>
-                        <TableCell className="text-white">{user.name}</TableCell>
+                      <TableRow key={user.user_id} className="border-gray-700">
+                        <TableCell className="text-white">{user.user_id}</TableCell>
+                        <TableCell className="text-white">{user.full_name}</TableCell>
                         <TableCell className="text-gray-400">{user.email}</TableCell>
                         <TableCell className="text-white">${user.balance.toLocaleString()}</TableCell>
                         <TableCell>
@@ -346,13 +346,15 @@ const Admin = () => {
                             {user.status}
                           </span>
                         </TableCell>
-                        <TableCell className="text-gray-400">{user.joined}</TableCell>
+                        <TableCell className="text-gray-400">
+                          {new Date(user.created_at).toLocaleDateString()}
+                        </TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => handleToggleUserStatus(user.id)}
+                              onClick={() => handleToggleUserStatus(user.user_id, user.status)}
                               className="border-gray-600 text-white hover:bg-white/10"
                             >
                               <Edit className="w-4 h-4" />
@@ -360,7 +362,7 @@ const Admin = () => {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => handleDeleteUser(user.id)}
+                              onClick={() => handleDeleteUser(user.user_id)}
                               className="border-red-600 text-red-400 hover:bg-red-400/10"
                             >
                               <Trash2 className="w-4 h-4" />
