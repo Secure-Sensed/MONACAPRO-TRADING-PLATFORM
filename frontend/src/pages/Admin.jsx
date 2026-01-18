@@ -438,7 +438,7 @@ const Admin = () => {
               <CardContent>
                 <div className="grid md:grid-cols-3 gap-6">
                   {plans.map((plan) => (
-                    <div key={plan.id} className="p-6 bg-[#0a1628]/50 rounded-lg border border-gray-700">
+                    <div key={plan.plan_id} className="p-6 bg-[#0a1628]/50 rounded-lg border border-gray-700">
                       {plan.popular && (
                         <span className="inline-block px-3 py-1 bg-cyan-400/20 text-cyan-400 rounded-full text-xs font-semibold mb-4">
                           Most Popular
