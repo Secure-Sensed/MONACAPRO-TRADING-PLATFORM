@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -24,34 +25,113 @@ import {
   XCircle
 } from 'lucide-react';
 import { toast } from '../hooks/use-toast';
-import { leadTraders, tradingPlans, recentTransactions } from '../data/mockData';
+import { useAuth } from '../context/AuthContext';
+
+const API_URL = process.env.REACT_APP_BACKEND_URL + '/api';
 
 const Admin = () => {
   const navigate = useNavigate();
-  const [users, setUsers] = useState([
-    { id: 1, name: 'John Doe', email: 'john@example.com', balance: 5000, status: 'active', joined: '2024-12-15' },
-    { id: 2, name: 'Jane Smith', email: 'jane@example.com', balance: 12000, status: 'active', joined: '2024-11-20' },
-    { id: 3, name: 'Bob Wilson', email: 'bob@example.com', balance: 8500, status: 'inactive', joined: '2024-10-05' },
-  ]);
-
+  const { user, logout } = useAuth();
+  const [users, setUsers] = useState([]);
   const [stats, setStats] = useState({
-    totalUsers: 1234,
-    activeUsers: 987,
-    totalRevenue: 458900,
-    pendingWithdrawals: 12
+    totalUsers: 0,
+    activeUsers: 0,
+    totalRevenue: 0,
+    pendingWithdrawals: 0
   });
-
-  const [traders, setTraders] = useState(leadTraders);
-  const [plans, setPlans] = useState(tradingPlans);
-  const [transactions, setTransactions] = useState(recentTransactions);
+  const [traders, setTraders] = useState([]);
+  const [plans, setPlans] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if admin is logged in
-    const isAdmin = localStorage.getItem('isAdmin');
-    if (!isAdmin) {
+    if (!user || user.role !== 'admin') {
       navigate('/admin/login');
+      return;
     }
-  }, [navigate]);
+    fetchAllData();
+  }, [user, navigate]);
+
+  const fetchAllData = async () => {
+    try {
+      await Promise.all([
+        fetchUsers(),
+        fetchStats(),
+        fetchTraders(),
+        fetchPlans(),
+        fetchTransactions()
+      ]);
+    } catch (error) {
+      console.error('Error fetching admin data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/users`, {
+        withCredentials: true
+      });
+      if (response.data.success) {
+        setUsers(response.data.users);
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/admin/stats`, {
+        withCredentials: true
+      });
+      if (response.data.success) {
+        setStats(response.data.stats);
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
+
+  const fetchTraders = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/traders`, {
+        withCredentials: true
+      });
+      if (response.data.success) {
+        setTraders(response.data.traders);
+      }
+    } catch (error) {
+      console.error('Error fetching traders:', error);
+    }
+  };
+
+  const fetchPlans = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/plans`, {
+        withCredentials: true
+      });
+      if (response.data.success) {
+        setPlans(response.data.plans);
+      }
+    } catch (error) {
+      console.error('Error fetching plans:', error);
+    }
+  };
+
+  const fetchTransactions = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/transactions`, {
+        withCredentials: true
+      });
+      if (response.data.success) {
+        setTransactions(response.data.transactions);
+      }
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+    }
+  };
 
   const handleDeleteUser = (userId) => {
     setUsers(users.filter(u => u.id !== userId));
