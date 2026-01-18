@@ -300,7 +300,10 @@ const Dashboard = () => {
                           <p className="text-white font-semibold">{trader.win_rate}</p>
                         </div>
                       </div>
-                      <Button className="w-full bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white">
+                      <Button 
+                        className="w-full bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white"
+                        onClick={() => handleCopyTrader(trader)}
+                      >
                         Copy Trader
                       </Button>
                     </div>
