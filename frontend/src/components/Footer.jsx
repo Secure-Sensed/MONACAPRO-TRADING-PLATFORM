@@ -70,7 +70,7 @@ const Footer = () => {
         {/* Social Media */}
         <div className="flex items-center justify-between pt-8 border-t border-gray-800">
           <p className="text-gray-400 text-sm">
-            © 2025 Moncaplus Copy Trading. All rights reserved.
+            © 2025 Monacap Trading Pro Copy Trading. All rights reserved.
           </p>
           <div className="flex space-x-4">
             <a href="#" className="text-gray-400 hover:text-cyan-400 transition-colors">
