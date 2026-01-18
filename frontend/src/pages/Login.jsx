@@ -215,7 +215,7 @@ const Login = () => {
                 💡 Admin users can login here using their credentials
               </p>
               <p className="text-gray-400 text-xs text-center mt-1">
-                (admin@moncaplus.com or addmin@moncaplus.com)
+                (admin@monacaptradingpro.com or addmin@monacaptradingpro.com)
               </p>
             </div>
           </CardContent>
