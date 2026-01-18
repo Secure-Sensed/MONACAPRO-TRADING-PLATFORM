@@ -412,10 +412,15 @@ async def get_admin_stats(request: Request, session_token: Optional[str] = Cooki
 # Include the router in the main app
 app.include_router(api_router)
 
+# CORS Configuration - Allow specific origins with credentials
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "https://monca-trading-clone.preview.emergentagent.com",
+        "https://*.emergentagent.com"
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
