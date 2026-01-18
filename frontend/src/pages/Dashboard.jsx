@@ -281,7 +281,7 @@ const Dashboard = () => {
               <CardContent>
                 <div className="grid md:grid-cols-2 gap-6">
                   {leadTraders.map((trader) => (
-                    <div key={trader.id} className="p-6 bg-[#0a1628]/50 rounded-lg border border-gray-700 hover:border-cyan-400/50 transition-all">
+                    <div key={trader.trader_id} className="p-6 bg-[#0a1628]/50 rounded-lg border border-gray-700 hover:border-cyan-400/50 transition-all">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center space-x-3">
                           <img src={trader.image} alt={trader.name} className="w-16 h-16 rounded-full" />
