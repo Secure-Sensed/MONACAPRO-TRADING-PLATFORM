@@ -386,7 +386,7 @@ const Admin = () => {
               <CardContent>
                 <div className="grid md:grid-cols-2 gap-6">
                   {traders.map((trader) => (
-                    <div key={trader.id} className="p-6 bg-[#0a1628]/50 rounded-lg border border-gray-700">
+                    <div key={trader.trader_id} className="p-6 bg-[#0a1628]/50 rounded-lg border border-gray-700">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center space-x-3">
                           <img src={trader.image} alt={trader.name} className="w-16 h-16 rounded-full" />
@@ -410,7 +410,7 @@ const Admin = () => {
                         </div>
                         <div>
                           <p className="text-gray-400 text-xs">Win Rate</p>
-                          <p className="text-white font-semibold">{trader.winRate}</p>
+                          <p className="text-white font-semibold">{trader.win_rate}</p>
                         </div>
                       </div>
                       <div className="flex space-x-2">
