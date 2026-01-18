@@ -74,7 +74,7 @@ const Home = () => {
                   ease: "linear"
                 }}
               >
-                moncaplus
+                monacaptradingpro
               </motion.span>
             </motion.h1>
             <motion.p 
