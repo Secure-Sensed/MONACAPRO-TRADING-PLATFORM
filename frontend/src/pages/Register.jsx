@@ -131,9 +131,10 @@ const Register = () => {
             </div>
             <Button
               type="submit"
+              disabled={isLoading}
               className="w-full bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white transition-all"
             >
-              Create Account
+              {isLoading ? 'Creating Account...' : 'Create Account'}
             </Button>
           </form>
 
