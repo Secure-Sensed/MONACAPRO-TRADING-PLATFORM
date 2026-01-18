@@ -13,13 +13,13 @@ const Footer = () => {
               <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xl">M</span>
               </div>
-              <span className="text-white font-bold text-xl">Moncaplus Copy Trading</span>
+              <span className="text-white font-bold text-xl">Monacap Trading Pro Copy Trading</span>
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed mb-4">
               <strong>Risk Warning:</strong> CFDs are complex instruments and come with a high risk of losing money rapidly due to leverage. You should consider copying a Lead Trader we provide that understand how CFDs work without the risk of losing your money.
             </p>
             <p className="text-gray-400 text-sm">
-              <strong>Moncaplus Copy Trading</strong> is a global financial services provider that operates among various entities.
+              <strong>Monacap Trading Pro Copy Trading</strong> is a global financial services provider that operates among various entities.
             </p>
           </div>
 
