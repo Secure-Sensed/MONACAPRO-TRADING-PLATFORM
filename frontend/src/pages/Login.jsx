@@ -6,13 +6,16 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { toast } from '../hooks/use-toast';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -21,23 +24,33 @@ const Login = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // MOCKED: Will be replaced with actual API call
-    localStorage.setItem('isLoggedIn', 'true');
-    toast({
-      title: 'Login Successful',
-      description: 'Welcome back to Moncaplus!'
-    });
-    navigate('/dashboard');
+    setIsLoading(true);
+    
+    const result = await login(formData.email, formData.password);
+    
+    if (result.success) {
+      toast({
+        title: 'Login Successful',
+        description: 'Welcome back to Moncaplus!'
+      });
+      navigate('/dashboard');
+    } else {
+      toast({
+        title: 'Login Failed',
+        description: result.error || 'Invalid credentials',
+        variant: 'destructive'
+      });
+    }
+    
+    setIsLoading(false);
   };
 
   const handleGoogleLogin = () => {
-    // MOCKED: Will be replaced with Emergent Google Auth
-    toast({
-      title: 'Google Login',
-      description: 'Google authentication will be integrated with backend'
-    });
+    // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+    const redirectUrl = window.location.origin + '/dashboard';
+    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
   };
 
   return (
