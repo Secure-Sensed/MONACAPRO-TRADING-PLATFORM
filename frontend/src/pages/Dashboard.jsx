@@ -248,26 +248,10 @@ const Dashboard = () => {
                 <CardHeader>
                   <CardTitle className="text-white">Recent Activity</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {recentTransactions.map((transaction) => (
-                    <div key={transaction.id} className="flex items-center justify-between p-4 bg-[#0a1628]/50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        {transaction.type === 'deposit' && <ArrowDownRight className="w-8 h-8 text-green-400" />}
-                        {transaction.type === 'withdrawal' && <ArrowUpRight className="w-8 h-8 text-red-400" />}
-                        {transaction.type === 'trade' && <Activity className="w-8 h-8 text-blue-400" />}
-                        <div>
-                          <h4 className="text-white font-semibold capitalize">{transaction.type}</h4>
-                          <p className="text-gray-400 text-sm">{transaction.method || transaction.asset}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className={`font-bold ${transaction.type === 'deposit' ? 'text-green-400' : transaction.type === 'withdrawal' ? 'text-red-400' : 'text-blue-400'}`}>
-                          ${transaction.amount}
-                        </p>
-                        <p className="text-gray-400 text-sm capitalize">{transaction.status}</p>
-                      </div>
-                    </div>
-                  ))}
+                <CardContent>
+                  <p className="text-gray-400 text-center py-8">
+                    No recent transactions to display
+                  </p>
                 </CardContent>
               </Card>
             </div>
