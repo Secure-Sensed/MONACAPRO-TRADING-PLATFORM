@@ -24,6 +24,8 @@ from auth import (
     get_current_user, require_admin, exchange_session_id,
     generate_user_id, generate_session_token
 )
+from email_service import send_welcome_email
+from wallet_service import get_wallet_address, get_all_wallets
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
