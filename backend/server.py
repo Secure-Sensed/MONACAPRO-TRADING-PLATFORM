@@ -325,6 +325,90 @@ async def get_plans():
         'plans': plans
     }
 
+# TRANSACTIONS
+
+@api_router.get("/transactions")
+async def get_transactions(request: Request, session_token: Optional[str] = Cookie(None)):
+    """Get all transactions (admin only)"""
+    await require_admin(request, session_token, db)
+    
+    transactions = await db.transactions.find({}, {'_id': 0}).to_list(1000)
+    return {
+        'success': True,
+        'transactions': transactions
+    }
+
+@api_router.put("/transactions/{transaction_id}/approve")
+async def approve_transaction(transaction_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    """Approve a transaction (admin only)"""
+    admin_user = await require_admin(request, session_token, db)
+    
+    result = await db.transactions.update_one(
+        {'transaction_id': transaction_id},
+        {
+            '$set': {
+                'status': 'completed',
+                'processed_by': admin_user['user_id'],
+                'processed_at': datetime.now(timezone.utc)
+            }
+        }
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail='Transaction not found')
+    
+    return {'success': True, 'message': 'Transaction approved'}
+
+@api_router.put("/transactions/{transaction_id}/reject")
+async def reject_transaction(transaction_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    """Reject a transaction (admin only)"""
+    admin_user = await require_admin(request, session_token, db)
+    
+    result = await db.transactions.update_one(
+        {'transaction_id': transaction_id},
+        {
+            '$set': {
+                'status': 'rejected',
+                'processed_by': admin_user['user_id'],
+                'processed_at': datetime.now(timezone.utc)
+            }
+        }
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail='Transaction not found')
+    
+    return {'success': True, 'message': 'Transaction rejected'}
+
+# ADMIN STATS
+
+@api_router.get("/admin/stats")
+async def get_admin_stats(request: Request, session_token: Optional[str] = Cookie(None)):
+    """Get admin dashboard statistics"""
+    await require_admin(request, session_token, db)
+    
+    total_users = await db.users.count_documents({'role': 'user'})
+    total_traders = await db.traders.count_documents({'is_active': True})
+    total_transactions = await db.transactions.count_documents({})
+    pending_transactions = await db.transactions.count_documents({'status': 'pending'})
+    total_plans = await db.plans.count_documents({'is_active': True})
+    
+    # Calculate total platform balance
+    users = await db.users.find({'role': 'user'}, {'balance': 1}).to_list(1000)
+    total_balance = sum(user.get('balance', 0) for user in users)
+    
+    return {
+        'success': True,
+        'stats': {
+            'total_users': total_users,
+            'total_traders': total_traders,
+            'total_transactions': total_transactions,
+            'pending_transactions': pending_transactions,
+            'total_plans': total_plans,
+            'total_platform_balance': total_balance
+        }
+    }
+
 # Include the router in the main app
 app.include_router(api_router)
 
