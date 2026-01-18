@@ -83,7 +83,7 @@ WELCOME_EMAIL_TEMPLATE = """
                             <table width="100%" cellpadding="0" cellspacing="0">
                                 <tr>
                                     <td align="center" style="padding: 30px 0;">
-                                        <a href="https://monca-trading-clone.preview.emergentagent.com/login" style="background: linear-gradient(135deg, #22d3ee 0%, #3b82f6 100%); color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold; display: inline-block;">Access Your Dashboard</a>
+                                        <a href="{{ app_url }}/login" style="background: linear-gradient(135deg, #22d3ee 0%, #3b82f6 100%); color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 5px; font-size: 16px; font-weight: bold; display: inline-block;">Access Your Dashboard</a>
                                     </td>
                                 </tr>
                             </table>
