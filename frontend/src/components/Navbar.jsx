@@ -107,7 +107,7 @@ const Navbar = () => {
               <span>English</span>
               <ChevronDown className="w-4 h-4" />
             </motion.button>
-            {!isLoggedIn ? (
+            {!isAuthenticated ? (
               <>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Button
@@ -128,14 +128,28 @@ const Navbar = () => {
                 </motion.div>
               </>
             ) : (
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button
-                  onClick={() => navigate('/dashboard')}
-                  className="bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white transition-all"
-                >
-                  Dashboard
-                </Button>
-              </motion.div>
+              <>
+                <span className="text-gray-300 text-sm">
+                  Welcome, {user?.full_name || 'User'}
+                </span>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button
+                    onClick={() => navigate(user?.role === 'admin' ? '/admin' : '/dashboard')}
+                    className="bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white transition-all"
+                  >
+                    {user?.role === 'admin' ? 'Admin Panel' : 'Dashboard'}
+                  </Button>
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button
+                    onClick={handleLogout}
+                    variant="outline"
+                    className="border-red-400 text-red-400 hover:bg-red-400 hover:text-white transition-all"
+                  >
+                    Logout
+                  </Button>
+                </motion.div>
+              </>
             )}
           </motion.div>
 
