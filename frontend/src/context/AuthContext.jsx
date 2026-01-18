@@ -19,7 +19,19 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuth = async () => {
     try {
-      const response = await axios.get(`${API_URL}/auth/me`);
+      const token = localStorage.getItem('session_token');
+      const config = {
+        withCredentials: true
+      };
+      
+      // Add token to header if available
+      if (token) {
+        config.headers = {
+          'Authorization': `Bearer ${token}`
+        };
+      }
+      
+      const response = await axios.get(`${API_URL}/auth/me`, config);
       if (response.data.success) {
         setUser(response.data.user);
         setIsAuthenticated(true);
