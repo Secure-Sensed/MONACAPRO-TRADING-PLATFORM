@@ -184,61 +184,112 @@ const Home = () => {
       {/* Copy Trading Section */}
       <section className="py-20 px-4">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-white text-center mb-4">
+          <motion.h2 
+            className="text-4xl font-bold text-white text-center mb-4"
+            initial={{ opacity: 0, y: 60 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
             Copy Trading with <span className="text-cyan-400">MCT</span>
-          </h2>
+          </motion.h2>
           <div className="grid md:grid-cols-2 gap-12 items-center mt-12">
-            <div>
+            <motion.div
+              initial={{ opacity: 0, x: -60 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+            >
               <p className="text-gray-300 text-lg leading-relaxed mb-6">
                 Copy trading is an innovative investment strategy that allows you to automatically replicate the trades of experienced and successful traders. Instead of making trading decisions on your own, you can choose a professional trader to follow, and their trades will be mirrored in your account in real-time.
               </p>
               <p className="text-gray-300 text-lg leading-relaxed">
                 This approach is ideal for beginners or those who lack the time to analyze markets, as it enables you to benefit from the expertise of seasoned traders. You maintain full control—choose who to follow, set your investment amount, and stop copying at any time.
               </p>
-            </div>
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/20 to-blue-500/20 rounded-lg blur-xl"></div>
-              <img 
+            </motion.div>
+            <motion.div 
+              className="relative"
+              initial={{ opacity: 0, x: 60 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+            >
+              <motion.div 
+                className="absolute inset-0 bg-gradient-to-r from-cyan-400/20 to-blue-500/20 rounded-lg blur-xl"
+                animate={{
+                  scale: [1, 1.1, 1],
+                  opacity: [0.5, 0.8, 0.5]
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              ></motion.div>
+              <motion.img 
                 src="https://images.unsplash.com/photo-1761850167081-473019536383?w=600" 
                 alt="Copy Trading" 
                 className="relative rounded-lg shadow-2xl"
+                whileHover={{ scale: 1.05, rotate: 2 }}
+                transition={{ duration: 0.3 }}
               />
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
       {/* Statistics Section */}
       <section className="py-20 px-4 relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-cyan-600/5"></div>
+        <motion.div 
+          className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-cyan-600/5"
+          animate={{
+            opacity: [0.3, 0.6, 0.3]
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity
+          }}
+        ></motion.div>
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 text-center">
-            <div className="space-y-2">
-              <Globe className="w-12 h-12 text-cyan-400 mx-auto" />
-              <h3 className="text-4xl font-bold text-white">{tradingStats.countries}</h3>
-              <p className="text-gray-400">countries</p>
-            </div>
-            <div className="space-y-2">
-              <Users className="w-12 h-12 text-cyan-400 mx-auto" />
-              <h3 className="text-4xl font-bold text-white">{tradingStats.traderAccounts}</h3>
-              <p className="text-gray-400">Trader accounts</p>
-            </div>
-            <div className="space-y-2">
-              <TrendingUp className="w-12 h-12 text-cyan-400 mx-auto" />
-              <h3 className="text-4xl font-bold text-white">{tradingStats.monthlyTransactions}</h3>
-              <p className="text-gray-400">Monthly transactions</p>
-            </div>
-            <div className="space-y-2">
-              <DollarSign className="w-12 h-12 text-cyan-400 mx-auto" />
-              <h3 className="text-4xl font-bold text-white">{tradingStats.averageMonthlyPayouts}</h3>
-              <p className="text-gray-400">Average monthly payouts</p>
-            </div>
-            <div className="space-y-2">
-              <BarChart3 className="w-12 h-12 text-cyan-400 mx-auto" />
-              <h3 className="text-4xl font-bold text-white">{tradingStats.monthlyTradeTurnover}</h3>
-              <p className="text-gray-400">Monthly trade turnover</p>
-            </div>
-          </div>
+          <motion.div 
+            className="grid grid-cols-2 md:grid-cols-5 gap-8 text-center"
+            variants={staggerContainer}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, amount: 0.3 }}
+          >
+            {[
+              { icon: Globe, value: tradingStats.countries, label: 'countries' },
+              { icon: Users, value: tradingStats.traderAccounts, label: 'Trader accounts' },
+              { icon: TrendingUp, value: tradingStats.monthlyTransactions, label: 'Monthly transactions' },
+              { icon: DollarSign, value: tradingStats.averageMonthlyPayouts, label: 'Average monthly payouts' },
+              { icon: BarChart3, value: tradingStats.monthlyTradeTurnover, label: 'Monthly trade turnover' }
+            ].map((stat, index) => (
+              <motion.div
+                key={index}
+                className="space-y-2"
+                variants={scaleIn}
+                whileHover={{ y: -10 }}
+              >
+                <motion.div
+                  whileHover={{ rotate: 360, scale: 1.2 }}
+                  transition={{ duration: 0.6 }}
+                >
+                  <stat.icon className="w-12 h-12 text-cyan-400 mx-auto" />
+                </motion.div>
+                <motion.h3 
+                  className="text-4xl font-bold text-white"
+                  initial={{ opacity: 0, scale: 0 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1, type: "spring", stiffness: 200 }}
+                >
+                  {stat.value}
+                </motion.h3>
+                <p className="text-gray-400">{stat.label}</p>
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
       </section>
 
