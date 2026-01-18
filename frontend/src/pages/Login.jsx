@@ -39,16 +39,27 @@ const Login = () => {
         description: 'Welcome back to Monacap Trading Pro!'
       });
       
-      // Check if user is admin and redirect accordingly
-      const userResponse = await axios.get(`${API_URL}/auth/me`, {
-        withCredentials: true
-      });
-      
-      if (userResponse.data.success && userResponse.data.user.role === 'admin') {
-        navigate('/admin');
-      } else {
-        navigate('/dashboard');
-      }
+      // Small delay to let AuthContext update
+      setTimeout(async () => {
+        try {
+          // Check if user is admin
+          const userResponse = await axios.get(`${API_URL}/auth/me`, {
+            withCredentials: true,
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('session_token')}`
+            }
+          });
+          
+          if (userResponse.data.success && userResponse.data.user.role === 'admin') {
+            navigate('/admin');
+          } else {
+            navigate('/dashboard');
+          }
+        } catch (error) {
+          console.error('Error checking user role:', error);
+          navigate('/dashboard');
+        }
+      }, 500);
     } else {
       toast({
         title: 'Login Failed',
