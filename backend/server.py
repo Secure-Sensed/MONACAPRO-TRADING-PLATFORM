@@ -46,16 +46,15 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# ==================== AUTH ENDPOINTS ====================
+# AUTH ENDPOINTS
 
 @api_router.post("/auth/register")
 async def register(user_data: UserCreate):
-    \"\"\"Register a new user with email and password\"\"\"\n    # Check if user exists
+    """Register a new user with email and password"""
     existing_user = await db.users.find_one({'email': user_data.email})
     if existing_user:
         raise HTTPException(status_code=400, detail='Email already registered')
     
-    # Create user
     user_id = generate_user_id()
     hashed_pwd = hash_password(user_data.password)
     
@@ -72,7 +71,6 @@ async def register(user_data: UserCreate):
     
     await db.users.insert_one(user_doc)
     
-    # Create session
     session_token = generate_session_token()
     session_doc = {
         'user_id': user_id,
@@ -82,7 +80,6 @@ async def register(user_data: UserCreate):
     }
     await db.user_sessions.insert_one(session_doc)
     
-    # Get user without password
     user = await db.users.find_one({'user_id': user_id}, {'_id': 0, 'password': 0})
     
     return {
@@ -94,14 +91,14 @@ async def register(user_data: UserCreate):
 
 @api_router.post("/auth/login")
 async def login(credentials: UserLogin):
-    \"\"\"Login with email and password\"\"\"\n    user_doc = await db.users.find_one({'email': credentials.email})
+    """Login with email and password"""
+    user_doc = await db.users.find_one({'email': credentials.email})
     if not user_doc:
         raise HTTPException(status_code=401, detail='Invalid credentials')
     
     if not verify_password(credentials.password, user_doc['password']):
         raise HTTPException(status_code=401, detail='Invalid credentials')
     
-    # Create session
     session_token = generate_session_token()
     session_doc = {
         'user_id': user_doc['user_id'],
@@ -111,7 +108,6 @@ async def login(credentials: UserLogin):
     }
     await db.user_sessions.insert_one(session_doc)
     
-    # Get user without password
     user = await db.users.find_one({'user_id': user_doc['user_id']}, {'_id': 0, 'password': 0})
     
     return {
@@ -123,22 +119,18 @@ async def login(credentials: UserLogin):
 
 @api_router.post("/auth/google")
 async def google_auth(request: Request):
-    \"\"\"Handle Google OAuth via Emergent Auth\"\"\"
-    # REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+    """Handle Google OAuth via Emergent Auth"""
     body = await request.json()
     session_id = body.get('session_id')
     
     if not session_id:
         raise HTTPException(status_code=400, detail='session_id required')
     
-    # Exchange session_id for user data
     user_data = await exchange_session_id(session_id)
     
-    # Check if user exists
     user_doc = await db.users.find_one({'email': user_data['email']})
     
     if user_doc:
-        # Update existing user
         user_id = user_doc['user_id']
         await db.users.update_one(
             {'user_id': user_id},
@@ -151,7 +143,6 @@ async def google_auth(request: Request):
             }
         )
     else:
-        # Create new user
         user_id = generate_user_id()
         new_user_doc = {
             'user_id': user_id,
@@ -166,7 +157,6 @@ async def google_auth(request: Request):
         }
         await db.users.insert_one(new_user_doc)
     
-    # Create session using the session_token from Emergent
     session_token = user_data['session_token']
     session_doc = {
         'user_id': user_id,
@@ -176,7 +166,6 @@ async def google_auth(request: Request):
     }
     await db.user_sessions.insert_one(session_doc)
     
-    # Get user
     user = await db.users.find_one({'user_id': user_id}, {'_id': 0, 'password': 0})
     
     return {
@@ -188,7 +177,8 @@ async def google_auth(request: Request):
 
 @api_router.get("/auth/me")
 async def get_me(request: Request, session_token: Optional[str] = Cookie(None)):
-    \"\"\"Get current user info\"\"\"\n    user = await get_current_user(request, session_token, db)
+    """Get current user info"""
+    user = await get_current_user(request, session_token, db)
     return {
         'success': True,
         'user': user
@@ -196,7 +186,7 @@ async def get_me(request: Request, session_token: Optional[str] = Cookie(None)):
 
 @api_router.post("/auth/logout")
 async def logout(request: Request, session_token: Optional[str] = Cookie(None)):
-    \"\"\"Logout user\"\"\"\n    # Get token from cookie or header
+    """Logout user"""
     token = session_token
     if not token:
         auth_header = request.headers.get('Authorization')
@@ -208,11 +198,12 @@ async def logout(request: Request, session_token: Optional[str] = Cookie(None)):
     
     return {'success': True, 'message': 'Logged out successfully'}
 
-# ==================== USER MANAGEMENT ENDPOINTS ====================
+# USER MANAGEMENT
 
 @api_router.get("/users")
 async def get_users(request: Request, session_token: Optional[str] = Cookie(None)):
-    \"\"\"Get all users (admin only)\"\"\"\n    await require_admin(request, session_token, db)
+    """Get all users (admin only)"""
+    await require_admin(request, session_token, db)
     
     users = await db.users.find({}, {'_id': 0, 'password': 0}).to_list(1000)
     return {
@@ -222,7 +213,8 @@ async def get_users(request: Request, session_token: Optional[str] = Cookie(None
 
 @api_router.put("/users/{user_id}")
 async def update_user(user_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
-    \"\"\"Update user (admin only)\"\"\"\n    await require_admin(request, session_token, db)
+    """Update user (admin only)"""
+    await require_admin(request, session_token, db)
     
     body = await request.json()
     update_data = {}
@@ -242,7 +234,8 @@ async def update_user(user_id: str, request: Request, session_token: Optional[st
 
 @api_router.delete("/users/{user_id}")
 async def delete_user(user_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
-    \"\"\"Delete user (admin only)\"\"\"\n    await require_admin(request, session_token, db)
+    """Delete user (admin only)"""
+    await require_admin(request, session_token, db)
     
     await db.users.delete_one({'user_id': user_id})
     await db.user_sessions.delete_many({'user_id': user_id})
@@ -251,11 +244,12 @@ async def delete_user(user_id: str, request: Request, session_token: Optional[st
     
     return {'success': True, 'message': 'User deleted'}
 
-# ==================== TRADER ENDPOINTS ====================
+# TRADER ENDPOINTS
 
 @api_router.get("/traders")
 async def get_traders():
-    \"\"\"Get all active traders\"\"\"\n    traders = await db.traders.find({'is_active': True}, {'_id': 0}).to_list(100)
+    """Get all active traders"""
+    traders = await db.traders.find({'is_active': True}, {'_id': 0}).to_list(100)
     return {
         'success': True,
         'traders': traders
@@ -263,9 +257,10 @@ async def get_traders():
 
 @api_router.post("/traders")
 async def create_trader(trader_data: TraderCreate, request: Request, session_token: Optional[str] = Cookie(None)):
-    \"\"\"Create trader (admin only)\"\"\"\n    await require_admin(request, session_token, db)
+    """Create trader (admin only)"""
+    await require_admin(request, session_token, db)
     
-    trader_id = f\"trader_{uuid.uuid4().hex[:12]}\"
+    trader_id = f"trader_{uuid.uuid4().hex[:12]}"
     trader_doc = {
         'trader_id': trader_id,
         **trader_data.dict(),
@@ -283,291 +278,23 @@ async def create_trader(trader_data: TraderCreate, request: Request, session_tok
         'trader': trader
     }
 
-@api_router.put("/traders/{trader_id}")
-async def update_trader(trader_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
-    \"\"\"Update trader (admin only)\"\"\"\n    await require_admin(request, session_token, db)
-    
-    body = await request.json()
-    await db.traders.update_one({'trader_id': trader_id}, {'$set': body})
-    
-    return {'success': True, 'message': 'Trader updated'}
-
-@api_router.delete("/traders/{trader_id}")
-async def delete_trader(trader_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
-    \"\"\"Delete trader (admin only)\"\"\"\n    await require_admin(request, session_token, db)
-    
-    await db.traders.update_one({'trader_id': trader_id}, {'$set': {'is_active': False}})
-    
-    return {'success': True, 'message': 'Trader deactivated'}
-
-# ==================== COPY TRADING ENDPOINTS ====================
-
-@api_router.post("/copy/start")
-async def start_copy_trading(copy_data: CopyTradeCreate, request: Request, session_token: Optional[str] = Cookie(None)):
-    \"\"\"Start copying a trader\"\"\"\n    user = await get_current_user(request, session_token, db)
-    
-    # Check if trader exists
-    trader = await db.traders.find_one({'trader_id': copy_data.trader_id})
-    if not trader:
-        raise HTTPException(status_code=404, detail='Trader not found')
-    
-    # Check user balance
-    if user['balance'] < copy_data.amount:
-        raise HTTPException(status_code=400, detail='Insufficient balance')
-    
-    # Create copy trade
-    copy_trade_id = f\"copy_{uuid.uuid4().hex[:12]}\"
-    copy_trade_doc = {
-        'copy_trade_id': copy_trade_id,
-        'user_id': user['user_id'],
-        'trader_id': copy_data.trader_id,
-        'amount': copy_data.amount,
-        'started_at': datetime.now(timezone.utc),
-        'current_profit': 0.0,
-        'status': 'active'
-    }
-    
-    await db.copy_trades.insert_one(copy_trade_doc)
-    
-    # Update user balance
-    await db.users.update_one(
-        {'user_id': user['user_id']},
-        {'$inc': {'balance': -copy_data.amount}}
-    )
-    
-    # Increment trader followers
-    await db.traders.update_one(
-        {'trader_id': copy_data.trader_id},
-        {'$inc': {'followers': 1}}
-    )
-    
-    return {'success': True, 'message': 'Copy trading started', 'copy_trade_id': copy_trade_id}
-
-@api_router.get("/copy/active")
-async def get_active_copies(request: Request, session_token: Optional[str] = Cookie(None)):
-    \"\"\"Get active copy trades for current user\"\"\"\n    user = await get_current_user(request, session_token, db)
-    
-    copy_trades = await db.copy_trades.find(
-        {'user_id': user['user_id'], 'status': 'active'},
-        {'_id': 0}
-    ).to_list(100)
-    
-    # Populate trader info
-    for ct in copy_trades:
-        trader = await db.traders.find_one({'trader_id': ct['trader_id']}, {'_id': 0})
-        ct['trader'] = trader
-    
-    return {
-        'success': True,
-        'active_copies': copy_trades
-    }
-
-@api_router.delete("/copy/{copy_trade_id}")
-async def stop_copy_trading(copy_trade_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
-    \"\"\"Stop copying a trader\"\"\"\n    user = await get_current_user(request, session_token, db)
-    
-    copy_trade = await db.copy_trades.find_one({'copy_trade_id': copy_trade_id, 'user_id': user['user_id']})
-    if not copy_trade:
-        raise HTTPException(status_code=404, detail='Copy trade not found')
-    
-    # Stop copy trade
-    await db.copy_trades.update_one(
-        {'copy_trade_id': copy_trade_id},
-        {
-            '$set': {
-                'status': 'stopped',
-                'ended_at': datetime.now(timezone.utc)
-            }
-        }
-    )
-    
-    # Return amount + profit to user
-    final_amount = copy_trade['amount'] + copy_trade.get('current_profit', 0)
-    await db.users.update_one(
-        {'user_id': user['user_id']},
-        {'$inc': {'balance': final_amount}}
-    )
-    
-    # Decrement trader followers
-    await db.traders.update_one(
-        {'trader_id': copy_trade['trader_id']},
-        {'$inc': {'followers': -1}}
-    )
-    
-    return {'success': True, 'message': 'Copy trading stopped'}
-
-# ==================== TRANSACTION ENDPOINTS ====================
-
-@api_router.post("/transactions/deposit")
-async def create_deposit(transaction_data: TransactionCreate, request: Request, session_token: Optional[str] = Cookie(None)):
-    \"\"\"Create deposit transaction\"\"\"\n    user = await get_current_user(request, session_token, db)
-    
-    transaction_id = f\"txn_{uuid.uuid4().hex[:12]}\"
-    transaction_doc = {
-        'transaction_id': transaction_id,
-        'user_id': user['user_id'],
-        'type': 'deposit',
-        'amount': transaction_data.amount,
-        'method': transaction_data.method,
-        'status': TransactionStatus.PENDING.value,
-        'date': datetime.now(timezone.utc)
-    }
-    
-    await db.transactions.insert_one(transaction_doc)
-    
-    return {'success': True, 'message': 'Deposit request created', 'transaction_id': transaction_id}
-
-@api_router.post("/transactions/withdraw")
-async def create_withdrawal(transaction_data: TransactionCreate, request: Request, session_token: Optional[str] = Cookie(None)):
-    \"\"\"Create withdrawal transaction\"\"\"\n    user = await get_current_user(request, session_token, db)
-    
-    if user['balance'] < transaction_data.amount:
-        raise HTTPException(status_code=400, detail='Insufficient balance')
-    
-    transaction_id = f\"txn_{uuid.uuid4().hex[:12]}\"
-    transaction_doc = {
-        'transaction_id': transaction_id,
-        'user_id': user['user_id'],
-        'type': 'withdrawal',
-        'amount': transaction_data.amount,
-        'method': transaction_data.method,
-        'status': TransactionStatus.PENDING.value,
-        'date': datetime.now(timezone.utc)
-    }
-    
-    await db.transactions.insert_one(transaction_doc)
-    
-    return {'success': True, 'message': 'Withdrawal request created', 'transaction_id': transaction_id}
-
-@api_router.get("/transactions")
-async def get_transactions(request: Request, session_token: Optional[str] = Cookie(None)):
-    \"\"\"Get all transactions for current user or all if admin\"\"\"\n    user = await get_current_user(request, session_token, db)
-    
-    if user['role'] == 'admin':
-        transactions = await db.transactions.find({}, {'_id': 0}).to_list(1000)
-    else:
-        transactions = await db.transactions.find({'user_id': user['user_id']}, {'_id': 0}).to_list(1000)
-    
-    return {
-        'success': True,
-        'transactions': transactions
-    }
-
-@api_router.put("/transactions/{transaction_id}/approve")
-async def approve_transaction(transaction_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
-    \"\"\"Approve transaction (admin only)\"\"\"\n    admin = await require_admin(request, session_token, db)
-    
-    transaction = await db.transactions.find_one({'transaction_id': transaction_id})
-    if not transaction:
-        raise HTTPException(status_code=404, detail='Transaction not found')
-    
-    # Update transaction
-    await db.transactions.update_one(
-        {'transaction_id': transaction_id},
-        {
-            '$set': {
-                'status': TransactionStatus.COMPLETED.value,
-                'processed_by': admin['user_id']
-            }
-        }
-    )
-    
-    # Update user balance for deposits
-    if transaction['type'] == 'deposit':
-        await db.users.update_one(
-            {'user_id': transaction['user_id']},
-            {'$inc': {'balance': transaction['amount']}}
-        )
-    elif transaction['type'] == 'withdrawal':
-        await db.users.update_one(
-            {'user_id': transaction['user_id']},
-            {'$inc': {'balance': -transaction['amount']}}
-        )
-    
-    return {'success': True, 'message': 'Transaction approved'}
-
-@api_router.put("/transactions/{transaction_id}/reject")
-async def reject_transaction(transaction_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
-    \"\"\"Reject transaction (admin only)\"\"\"\n    admin = await require_admin(request, session_token, db)
-    
-    await db.transactions.update_one(
-        {'transaction_id': transaction_id},
-        {
-            '$set': {
-                'status': TransactionStatus.REJECTED.value,
-                'processed_by': admin['user_id']
-            }
-        }
-    )
-    
-    return {'success': True, 'message': 'Transaction rejected'}
-
-# ==================== PLANS ENDPOINTS ====================
-
-@api_router.get("/plans")
-async def get_plans():
-    \"\"\"Get all active plans\"\"\"\n    plans = await db.plans.find({'is_active': True}, {'_id': 0}).to_list(100)
-    return {
-        'success': True,
-        'plans': plans
-    }
-
-@api_router.post("/plans")
-async def create_plan(plan_data: PlanCreate, request: Request, session_token: Optional[str] = Cookie(None)):
-    \"\"\"Create plan (admin only)\"\"\"\n    await require_admin(request, session_token, db)
-    
-    plan_id = f\"plan_{uuid.uuid4().hex[:12]}\"
-    plan_doc = {
-        'plan_id': plan_id,
-        **plan_data.dict(),
-        'is_active': True,
-        'created_at': datetime.now(timezone.utc)
-    }
-    
-    await db.plans.insert_one(plan_doc)
-    plan = await db.plans.find_one({'plan_id': plan_id}, {'_id': 0})
-    
-    return {
-        'success': True,
-        'plan': plan
-    }
-
-@api_router.put("/plans/{plan_id}")
-async def update_plan(plan_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
-    \"\"\"Update plan (admin only)\"\"\"\n    await require_admin(request, session_token, db)
-    
-    body = await request.json()
-    await db.plans.update_one({'plan_id': plan_id}, {'$set': body})
-    
-    return {'success': True, 'message': 'Plan updated'}
-
-@api_router.delete("/plans/{plan_id}")
-async def delete_plan(plan_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
-    \"\"\"Delete plan (admin only)\"\"\"\n    await require_admin(request, session_token, db)
-    
-    await db.plans.update_one({'plan_id': plan_id}, {'$set': {'is_active': False}})
-    
-    return {'success': True, 'message': 'Plan deactivated'}
-
-# ==================== DASHBOARD ENDPOINTS ====================
+# DASHBOARD
 
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats(request: Request, session_token: Optional[str] = Cookie(None)):
-    \"\"\"Get dashboard statistics for current user\"\"\"\n    user = await get_current_user(request, session_token, db)
+    """Get dashboard statistics for current user"""
+    user = await get_current_user(request, session_token, db)
     
-    # Get active copy trades count
     active_copies = await db.copy_trades.count_documents({
         'user_id': user['user_id'],
         'status': 'active'
     })
     
-    # Get total trades
     total_trades = await db.transactions.count_documents({
         'user_id': user['user_id'],
         'type': 'trade'
     })
     
-    # Calculate profit (simplified for now)
     copy_trades = await db.copy_trades.find({
         'user_id': user['user_id'],
         'status': 'active'
@@ -587,32 +314,15 @@ async def get_dashboard_stats(request: Request, session_token: Optional[str] = C
         }
     }
 
-# ==================== ADMIN STATS ENDPOINTS ====================
+# PLANS
 
-@api_router.get("/admin/stats")
-async def get_admin_stats(request: Request, session_token: Optional[str] = Cookie(None)):
-    \"\"\"Get admin dashboard statistics\"\"\"\n    await require_admin(request, session_token, db)
-    
-    total_users = await db.users.count_documents({})
-    active_users = await db.users.count_documents({'status': 'active'})
-    pending_transactions = await db.transactions.count_documents({'status': 'pending'})
-    
-    # Calculate total revenue (sum of all completed deposits)
-    pipeline = [
-        {'$match': {'type': 'deposit', 'status': 'completed'}},
-        {'$group': {'_id': None, 'total': {'$sum': '$amount'}}}
-    ]
-    revenue_result = await db.transactions.aggregate(pipeline).to_list(1)
-    total_revenue = revenue_result[0]['total'] if revenue_result else 0
-    
+@api_router.get("/plans")
+async def get_plans():
+    """Get all active plans"""
+    plans = await db.plans.find({'is_active': True}, {'_id': 0}).to_list(100)
     return {
         'success': True,
-        'stats': {
-            'total_users': total_users,
-            'active_users': active_users,
-            'total_revenue': total_revenue,
-            'pending_withdrawals': pending_transactions
-        }
+        'plans': plans
     }
 
 # Include the router in the main app
