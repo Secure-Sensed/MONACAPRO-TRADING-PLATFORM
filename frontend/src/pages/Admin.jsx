@@ -492,11 +492,11 @@ const Admin = () => {
                   </TableHeader>
                   <TableBody>
                     {transactions.map((transaction) => (
-                      <TableRow key={transaction.id} className="border-gray-700">
-                        <TableCell className="text-white">{transaction.id}</TableCell>
+                      <TableRow key={transaction.transaction_id} className="border-gray-700">
+                        <TableCell className="text-white">{transaction.transaction_id}</TableCell>
                         <TableCell className="text-white capitalize">{transaction.type}</TableCell>
                         <TableCell className="text-white">${transaction.amount}</TableCell>
-                        <TableCell className="text-gray-400">{transaction.method || transaction.asset}</TableCell>
+                        <TableCell className="text-gray-400">{transaction.method || transaction.asset || 'N/A'}</TableCell>
                         <TableCell>
                           <span className={`px-2 py-1 rounded-full text-xs ${
                             transaction.status === 'completed' 
@@ -514,7 +514,7 @@ const Admin = () => {
                             <div className="flex space-x-2">
                               <Button
                                 size="sm"
-                                onClick={() => handleApproveTransaction(transaction.id)}
+                                onClick={() => handleApproveTransaction(transaction.transaction_id)}
                                 className="bg-green-400 hover:bg-green-500 text-white"
                               >
                                 <CheckCircle className="w-4 h-4" />
@@ -522,7 +522,7 @@ const Admin = () => {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => handleRejectTransaction(transaction.id)}
+                                onClick={() => handleRejectTransaction(transaction.transaction_id)}
                                 className="border-red-600 text-red-400 hover:bg-red-400/10"
                               >
                                 <XCircle className="w-4 h-4" />
