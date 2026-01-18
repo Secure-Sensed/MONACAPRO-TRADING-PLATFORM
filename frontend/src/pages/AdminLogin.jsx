@@ -30,33 +30,48 @@ const AdminLogin = () => {
     setIsLoading(true);
     
     try {
-      // Login with username (we'll convert to email on backend)
+      // Login with username (convert to email)
       const email = `${formData.username}@monacaptradingpro.com`;
+      
       const response = await axios.post(`${API_URL}/auth/login`, {
         email: email,
         password: formData.password
       }, {
-        withCredentials: true
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
       
-      if (response.data.success && response.data.user.role === 'admin') {
+      if (response.data.success) {
+        // Store token
         localStorage.setItem('session_token', response.data.token);
-        toast({
-          title: 'Admin Login Successful',
-          description: 'Welcome to the admin panel'
-        });
-        navigate('/admin');
-      } else {
-        toast({
-          title: 'Access Denied',
-          description: 'Admin privileges required',
-          variant: 'destructive'
-        });
+        
+        // Set axios default header for subsequent requests
+        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+        
+        // Verify admin role
+        if (response.data.user.role === 'admin') {
+          toast({
+            title: 'Admin Login Successful',
+            description: `Welcome ${response.data.user.full_name}!`
+          });
+          
+          // Force reload to ensure AuthContext picks up the session
+          window.location.href = '/admin';
+        } else {
+          toast({
+            title: 'Access Denied',
+            description: 'Admin privileges required',
+            variant: 'destructive'
+          });
+        }
       }
     } catch (error) {
+      console.error('Admin login error:', error);
       toast({
         title: 'Login Failed',
-        description: 'Invalid admin credentials',
+        description: error.response?.data?.detail || 'Invalid admin credentials',
         variant: 'destructive'
       });
     } finally {
