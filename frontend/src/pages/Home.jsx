@@ -33,63 +33,117 @@ const Home = () => {
     <div className="min-h-screen bg-gradient-to-b from-[#0a1628] via-[#0f1f3a] to-[#0a1628]">
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-cyan-600/10"></div>
+        <motion.div 
+          className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-cyan-600/10"
+          animate={{
+            opacity: [0.3, 0.5, 0.3],
+          }}
+          transition={{
+            duration: 5,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        ></motion.div>
         <div className="absolute top-0 right-0 w-1/2 h-full">
           <div className="absolute inset-0 bg-gradient-to-l from-transparent to-[#0a1628]"></div>
-          <img 
+          <motion.img 
             src="https://images.unsplash.com/photo-1651176118867-f4ac0b1d6da4?w=800" 
             alt="Trading" 
             className="w-full h-full object-cover opacity-30"
+            initial={{ opacity: 0, scale: 1.2 }}
+            animate={{ opacity: 0.3, scale: 1 }}
+            transition={{ duration: 1.2 }}
           />
         </div>
         
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="max-w-2xl">
-            <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
+            <motion.h1 
+              className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight"
+              {...fadeInUp}
+            >
               Unlock your financial potential with{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+              <motion.span 
+                className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500"
+                animate={{
+                  backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                }}
+                transition={{
+                  duration: 5,
+                  repeat: Infinity,
+                  ease: "linear"
+                }}
+              >
                 moncaplus
-              </span>
-            </h1>
-            <p className="text-xl text-gray-300 mb-8 leading-relaxed">
+              </motion.span>
+            </motion.h1>
+            <motion.p 
+              className="text-xl text-gray-300 mb-8 leading-relaxed"
+              initial={{ opacity: 0, y: 60 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
               A trading platform that supports your financial goals by providing advanced tools, expert insights, and a secure environment for your investments.
-            </p>
+            </motion.p>
             
             {/* Asset Icons */}
-            <div className="flex items-center space-x-4 mb-8">
-              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold">F</span>
-              </div>
-              <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold">M</span>
-              </div>
-              <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold">T</span>
-              </div>
-              <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold">G</span>
-              </div>
-              <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold">A</span>
-              </div>
-              <span className="text-cyan-400 font-semibold">+100 assets</span>
-            </div>
+            <motion.div 
+              className="flex items-center space-x-4 mb-8"
+              variants={staggerContainer}
+              initial="initial"
+              animate="animate"
+            >
+              {['F', 'M', 'T', 'G', 'A'].map((letter, index) => (
+                <motion.div
+                  key={letter}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    index === 0 ? 'bg-blue-600' :
+                    index === 1 ? 'bg-yellow-500' :
+                    index === 2 ? 'bg-gray-700' :
+                    index === 3 ? 'bg-red-600' : 'bg-gray-900'
+                  }`}
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.4 + index * 0.1, type: "spring", stiffness: 200 }}
+                  whileHover={{ scale: 1.2, rotate: 360 }}
+                >
+                  <span className="text-white font-bold">{letter}</span>
+                </motion.div>
+              ))}
+              <motion.span 
+                className="text-cyan-400 font-semibold"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.9 }}
+              >
+                +100 assets
+              </motion.span>
+            </motion.div>
 
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button
-                onClick={() => navigate('/register')}
-                className="bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white px-8 py-6 text-lg transition-all transform hover:scale-105"
-              >
-                Register
-              </Button>
-              <Button
-                onClick={() => navigate('/login')}
-                variant="outline"
-                className="border-2 border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-white px-8 py-6 text-lg transition-all"
-              >
-                Login
-              </Button>
-            </div>
+            <motion.div 
+              className="flex flex-col sm:flex-row gap-4"
+              initial={{ opacity: 0, y: 60 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+            >
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  onClick={() => navigate('/register')}
+                  className="bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white px-8 py-6 text-lg transition-all shadow-lg shadow-cyan-500/50"
+                >
+                  Register
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  onClick={() => navigate('/login')}
+                  variant="outline"
+                  className="border-2 border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-white px-8 py-6 text-lg transition-all"
+                >
+                  Login
+                </Button>
+              </motion.div>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -97,16 +151,33 @@ const Home = () => {
       {/* Features Section */}
       <section className="py-16 px-4">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <motion.div 
+            className="grid grid-cols-2 md:grid-cols-5 gap-4"
+            variants={staggerContainer}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, amount: 0.3 }}
+          >
             {features.map((feature, index) => (
-              <Card key={index} className="bg-[#1a2942]/50 border-gray-700 backdrop-blur-sm hover:bg-[#1a2942]/80 transition-all">
-                <CardContent className="p-6 text-center">
-                  <h3 className="text-2xl font-bold text-white mb-2">{feature.value}</h3>
-                  <p className="text-gray-400 text-sm">{feature.label}</p>
-                </CardContent>
-              </Card>
+              <motion.div
+                key={index}
+                variants={scaleIn}
+                whileHover={{ y: -10, transition: { duration: 0.3 } }}
+              >
+                <Card className="bg-[#1a2942]/50 border-gray-700 backdrop-blur-sm hover:bg-[#1a2942]/80 transition-all hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/20">
+                  <CardContent className="p-6 text-center">
+                    <motion.h3 
+                      className="text-2xl font-bold text-white mb-2"
+                      whileHover={{ scale: 1.1 }}
+                    >
+                      {feature.value}
+                    </motion.h3>
+                    <p className="text-gray-400 text-sm">{feature.label}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
