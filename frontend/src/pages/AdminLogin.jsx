@@ -6,13 +6,17 @@ import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { toast } from '../hooks/use-toast';
 import { Shield } from 'lucide-react';
+import axios from 'axios';
+
+const API_URL = process.env.REACT_APP_BACKEND_URL + '/api';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: ''
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -21,23 +25,42 @@ const AdminLogin = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     
-    // MOCKED: Admin credentials (will be replaced with backend)
-    if (formData.email === 'admin@moncaplus.com' && formData.password === 'admin123') {
-      localStorage.setItem('isAdmin', 'true');
-      toast({
-        title: 'Admin Login Successful',
-        description: 'Welcome to the admin panel'
+    try {
+      // Login with username (we'll convert to email on backend)
+      const email = `${formData.username}@moncaplus.com`;
+      const response = await axios.post(`${API_URL}/auth/login`, {
+        email: email,
+        password: formData.password
+      }, {
+        withCredentials: true
       });
-      navigate('/admin');
-    } else {
+      
+      if (response.data.success && response.data.user.role === 'admin') {
+        localStorage.setItem('session_token', response.data.token);
+        toast({
+          title: 'Admin Login Successful',
+          description: 'Welcome to the admin panel'
+        });
+        navigate('/admin');
+      } else {
+        toast({
+          title: 'Access Denied',
+          description: 'Admin privileges required',
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
       toast({
         title: 'Login Failed',
         description: 'Invalid admin credentials',
         variant: 'destructive'
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
