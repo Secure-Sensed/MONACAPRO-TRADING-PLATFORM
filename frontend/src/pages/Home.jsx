@@ -296,66 +296,165 @@ const Home = () => {
       {/* Trading Assets Section */}
       <section className="py-20 px-4">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-white text-center mb-4">
+          <motion.h2 
+            className="text-4xl font-bold text-white text-center mb-4"
+            initial={{ opacity: 0, y: 60 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
             Our Trading <span className="text-cyan-400">Assets</span>
-          </h2>
-          <p className="text-gray-400 text-center mb-12 max-w-3xl mx-auto">
+          </motion.h2>
+          <motion.p 
+            className="text-gray-400 text-center mb-12 max-w-3xl mx-auto"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+          >
             Trade across multiple asset classes with competitive spreads and deep liquidity
-          </p>
+          </motion.p>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <motion.div 
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+            variants={staggerContainer}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, amount: 0.1 }}
+          >
             {tradingAssets.map((asset) => (
-              <Card key={asset.id} className="bg-[#1a2942]/50 border-gray-700 hover:bg-[#1a2942]/80 transition-all hover:border-cyan-400/50">
-                <CardContent className="p-6">
-                  <h3 className="text-2xl font-bold text-white mb-4">{asset.name}</h3>
-                  <p className="text-gray-400 mb-6 leading-relaxed">{asset.description}</p>
-                  <ul className="space-y-2">
-                    {asset.markets.map((market, idx) => (
-                      <li key={idx} className="text-cyan-400 text-sm flex items-center">
-                        <Shield className="w-4 h-4 mr-2" />
-                        {market}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+              <motion.div
+                key={asset.id}
+                variants={scaleIn}
+                whileHover={{ y: -10, scale: 1.02 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Card className="bg-[#1a2942]/50 border-gray-700 hover:bg-[#1a2942]/80 transition-all hover:border-cyan-400/50 hover:shadow-xl hover:shadow-cyan-500/10 h-full">
+                  <CardContent className="p-6">
+                    <motion.h3 
+                      className="text-2xl font-bold text-white mb-4"
+                      whileHover={{ x: 10 }}
+                    >
+                      {asset.name}
+                    </motion.h3>
+                    <p className="text-gray-400 mb-6 leading-relaxed">{asset.description}</p>
+                    <ul className="space-y-2">
+                      {asset.markets.map((market, idx) => (
+                        <motion.li 
+                          key={idx} 
+                          className="text-cyan-400 text-sm flex items-center"
+                          initial={{ opacity: 0, x: -20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: idx * 0.1 }}
+                        >
+                          <motion.div whileHover={{ scale: 1.3, rotate: 360 }} transition={{ duration: 0.3 }}>
+                            <Shield className="w-4 h-4 mr-2" />
+                          </motion.div>
+                          {market}
+                        </motion.li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Achievements Section */}
       <section className="py-20 px-4">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-white text-center mb-12">
+          <motion.h2 
+            className="text-4xl font-bold text-white text-center mb-12"
+            initial={{ opacity: 0, y: 60 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
             <span className="text-cyan-400">Achievements</span>
-          </h2>
-          <div className="flex flex-wrap justify-center items-center gap-8">
+          </motion.h2>
+          <motion.div 
+            className="flex flex-wrap justify-center items-center gap-8"
+            variants={staggerContainer}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true }}
+          >
             {achievements.map((achievement, index) => (
-              <div key={index} className="w-32 h-32 flex items-center justify-center bg-white/5 rounded-lg p-4 hover:bg-white/10 transition-all">
-                <Award className="w-16 h-16 text-cyan-400" />
-              </div>
+              <motion.div 
+                key={index} 
+                className="w-32 h-32 flex items-center justify-center bg-white/5 rounded-lg p-4 hover:bg-white/10 transition-all"
+                variants={scaleIn}
+                whileHover={{ 
+                  scale: 1.15, 
+                  rotate: [0, 10, -10, 0],
+                  transition: { duration: 0.5 }
+                }}
+              >
+                <motion.div
+                  animate={{
+                    y: [0, -10, 0]
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    delay: index * 0.2
+                  }}
+                >
+                  <Award className="w-16 h-16 text-cyan-400" />
+                </motion.div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* CTA Section */}
       <section className="py-20 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold text-white mb-6">
-            Start Your Trading Journey with <span className="text-cyan-400">Moncaplus</span>
-          </h2>
-          <p className="text-xl text-gray-300 mb-8">
-            Join thousands of traders who trust our platform for their financial success
-          </p>
-          <Button
-            onClick={() => navigate('/register')}
-            className="bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white px-12 py-6 text-lg transition-all transform hover:scale-105"
+        <motion.div 
+          className="max-w-4xl mx-auto text-center"
+          initial={{ opacity: 0, scale: 0.9 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <motion.h2 
+            className="text-4xl font-bold text-white mb-6"
+            animate={{
+              textShadow: [
+                '0 0 20px rgba(34, 211, 238, 0)',
+                '0 0 20px rgba(34, 211, 238, 0.5)',
+                '0 0 20px rgba(34, 211, 238, 0)'
+              ]
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity
+            }}
           >
-            Get Started Now
-          </Button>
-        </div>
+            Start Your Trading Journey with <span className="text-cyan-400">Moncaplus</span>
+          </motion.h2>
+          <motion.p 
+            className="text-xl text-gray-300 mb-8"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+          >
+            Join thousands of traders who trust our platform for their financial success
+          </motion.p>
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Button
+              onClick={() => navigate('/register')}
+              className="bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white px-12 py-6 text-lg transition-all shadow-2xl shadow-cyan-500/50"
+            >
+              Get Started Now
+            </Button>
+          </motion.div>
+        </motion.div>
       </section>
     </div>
   );
