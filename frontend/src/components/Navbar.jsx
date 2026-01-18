@@ -54,7 +54,7 @@ const Navbar = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
             >
-              moncaplus
+              monacaptradingpro
             </motion.span>
             <motion.span 
               className="text-cyan-400 text-sm hidden sm:block"
