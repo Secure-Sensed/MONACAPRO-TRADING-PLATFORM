@@ -205,10 +205,34 @@ export const recentTransactions = [
 ];
 
 export const achievements = [
-  { image: 'https://moncapluscopytrading.com/assets/best-partners-program-global-2024-min.svg', alt: 'Best Partners Program Global 2024' },
-  { image: 'https://moncapluscopytrading.com/assets/top-trusted-financial-institution-2024-min.svg', alt: 'Top Trusted Financial Institution 2024' },
-  { image: 'https://moncapluscopytrading.com/assets/most-trusted-forex-broker-global-2024-min.svg', alt: 'Most Trusted Forex Broker Global 2024' },
-  { image: 'https://moncapluscopytrading.com/assets/best-fx-broker-global-2024-min.svg', alt: 'Best FX Broker Global 2024' },
-  { image: 'https://moncapluscopytrading.com/assets/best-customer-support-global-2024-min.svg', alt: 'Best Customer Support Global 2024' },
-  { image: 'https://moncapluscopytrading.com/assets/most-transparent-broker-asia-2024-min.svg', alt: 'Most Transparent Broker Asia 2024' }
+  { 
+    image: 'https://moncapluscopytrading.com/assets/best-partners-program-global-2024-min.svg', 
+    alt: 'Best Partners Program Global 2024',
+    title: 'Best Partners Program'
+  },
+  { 
+    image: 'https://moncapluscopytrading.com/assets/top-trusted-financial-institution-2024-min.svg', 
+    alt: 'Top Trusted Financial Institution 2024',
+    title: 'Top Trusted Financial Institution'
+  },
+  { 
+    image: 'https://moncapluscopytrading.com/assets/most-trusted-forex-broker-global-2024-min.svg', 
+    alt: 'Most Trusted Forex Broker Global 2024',
+    title: 'Most Trusted Forex Broker'
+  },
+  { 
+    image: 'https://moncapluscopytrading.com/assets/best-fx-broker-global-2024-min.svg', 
+    alt: 'Best FX Broker Global 2024',
+    title: 'Best FX Broker'
+  },
+  { 
+    image: 'https://moncapluscopytrading.com/assets/best-customer-support-global-2024-min.svg', 
+    alt: 'Best Customer Support Global 2024',
+    title: 'Best Customer Support'
+  },
+  { 
+    image: 'https://moncapluscopytrading.com/assets/most-transparent-broker-asia-2024-min.svg', 
+    alt: 'Most Transparent Broker Asia 2024',
+    title: 'Most Transparent Broker'
+  }
 ];
