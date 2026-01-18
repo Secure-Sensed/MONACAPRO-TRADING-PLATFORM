@@ -14,6 +14,7 @@ SMTP_USERNAME = os.getenv('SMTP_USERNAME', 'noreply@monacaptradingpro.com')
 SMTP_PASSWORD = os.getenv('SMTP_PASSWORD', '')  # Set your webmail password
 SMTP_FROM_EMAIL = os.getenv('SMTP_FROM_EMAIL', 'noreply@monacaptradingpro.com')
 SMTP_FROM_NAME = os.getenv('SMTP_FROM_NAME', 'Monacap Trading Pro')
+APP_URL = os.getenv('APP_URL', 'http://localhost:3000')  # Frontend URL for email links
 
 # Welcome email template
 WELCOME_EMAIL_TEMPLATE = """
