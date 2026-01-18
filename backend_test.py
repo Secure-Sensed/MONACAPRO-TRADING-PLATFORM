@@ -371,8 +371,10 @@ class AdminTester:
             response = self.make_request('GET', endpoint, token=user_token, expect_status=403)
             if response and response.status_code == 403:
                 log_success(f"Access to {endpoint} properly restricted for regular users")
+            elif response:
+                log_error(f"Regular user can access {endpoint} - got status {response.status_code}: {response.text[:100]}")
             else:
-                log_error(f"Regular user can access {endpoint} - security issue!")
+                log_error(f"No response received for {endpoint}")
 
     def run_all_tests(self):
         """Run all admin functionality tests"""
