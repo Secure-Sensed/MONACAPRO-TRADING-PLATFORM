@@ -35,7 +35,17 @@ const Login = () => {
         title: 'Login Successful',
         description: 'Welcome back to Moncaplus!'
       });
-      navigate('/dashboard');
+      
+      // Check if user is admin and redirect accordingly
+      const userResponse = await axios.get(`${API_URL}/auth/me`, {
+        withCredentials: true
+      });
+      
+      if (userResponse.data.success && userResponse.data.user.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
     } else {
       toast({
         title: 'Login Failed',
