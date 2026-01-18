@@ -87,95 +87,151 @@ const Navbar = () => {
           </motion.div>
 
           {/* Language Selector & Auth Buttons */}
-          <div className="hidden md:flex items-center space-x-4">
-            <button className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors">
+          <motion.div 
+            className="hidden md:flex items-center space-x-4"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <motion.button 
+              className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors"
+              whileHover={{ scale: 1.05 }}
+            >
               <img src="https://flagcdn.com/w20/gb.png" alt="English" className="w-5 h-4" />
               <span>English</span>
               <ChevronDown className="w-4 h-4" />
-            </button>
+            </motion.button>
             {!isLoggedIn ? (
               <>
-                <Button
-                  variant="outline"
-                  onClick={() => navigate('/login')}
-                  className="border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-white transition-all"
-                >
-                  Login
-                </Button>
-                <Button
-                  onClick={() => navigate('/register')}
-                  className="bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white transition-all"
-                >
-                  Registration
-                </Button>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate('/login')}
+                    className="border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-white transition-all"
+                  >
+                    Login
+                  </Button>
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button
+                    onClick={() => navigate('/register')}
+                    className="bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white transition-all shadow-lg shadow-cyan-500/30"
+                  >
+                    Registration
+                  </Button>
+                </motion.div>
               </>
             ) : (
-              <Button
-                onClick={() => navigate('/dashboard')}
-                className="bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white transition-all"
-              >
-                Dashboard
-              </Button>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  onClick={() => navigate('/dashboard')}
+                  className="bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white transition-all"
+                >
+                  Dashboard
+                </Button>
+              </motion.div>
             )}
-          </div>
+          </motion.div>
 
           {/* Mobile menu button */}
-          <button
+          <motion.button
             onClick={toggleMobileMenu}
             className="md:hidden text-white p-2"
+            whileTap={{ scale: 0.9 }}
           >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+            <AnimatePresence mode="wait">
+              {isMobileMenuOpen ? (
+                <motion.div
+                  key="close"
+                  initial={{ rotate: -90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: 90, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <X size={24} />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="menu"
+                  initial={{ rotate: 90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: -90, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Menu size={24} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.button>
         </div>
       </div>
 
       {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden bg-[#0a1628] border-t border-gray-800">
-          <div className="px-4 py-4 space-y-3">
-            <Link to="/" className="block text-gray-300 hover:text-white py-2">
-              Company
-            </Link>
-            <Link to="/mirror-trading" className="block text-gray-300 hover:text-white py-2">
-              Mirror trading
-            </Link>
-            <Link to="/stocks" className="block text-gray-300 hover:text-white py-2">
-              Stocks
-            </Link>
-            <Link to="/software" className="block text-gray-300 hover:text-white py-2">
-              Software
-            </Link>
-            <Link to="/insight" className="block text-gray-300 hover:text-white py-2">
-              Insight
-            </Link>
-            {!isLoggedIn ? (
-              <div className="flex flex-col space-y-2 pt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => navigate('/login')}
-                  className="border-cyan-400 text-cyan-400 w-full"
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div 
+            className="md:hidden bg-[#0a1628] border-t border-gray-800"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="px-4 py-4 space-y-3">
+              {['Company', 'Mirror trading', 'Stocks', 'Software', 'Insight'].map((item, index) => (
+                <motion.div
+                  key={item}
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: index * 0.1 }}
                 >
-                  Login
-                </Button>
-                <Button
-                  onClick={() => navigate('/register')}
-                  className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white w-full"
+                  <Link 
+                    to={`/${item.toLowerCase().replace(' ', '-')}`} 
+                    className="block text-gray-300 hover:text-white py-2"
+                  >
+                    {item}
+                  </Link>
+                </motion.div>
+              ))}
+              {!isLoggedIn ? (
+                <motion.div 
+                  className="flex flex-col space-y-2 pt-4"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.5 }}
                 >
-                  Registration
-                </Button>
-              </div>
-            ) : (
-              <Button
-                onClick={() => navigate('/dashboard')}
-                className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white w-full"
-              >
-                Dashboard
-              </Button>
-            )}
-          </div>
-        </div>
-      )}
-    </nav>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate('/login')}
+                    className="border-cyan-400 text-cyan-400 w-full"
+                  >
+                    Login
+                  </Button>
+                  <Button
+                    onClick={() => navigate('/register')}
+                    className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white w-full"
+                  >
+                    Registration
+                  </Button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <Button
+                    onClick={() => navigate('/dashboard')}
+                    className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white w-full"
+                  >
+                    Dashboard
+                  </Button>
+                </motion.div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.nav>
   );
 };
 
