@@ -14,6 +14,10 @@ import AdminLogin from "./pages/AdminLogin";
 import Stocks from "./pages/Stocks";
 import MirrorTrading from "./pages/MirrorTrading";
 import Company from "./pages/Company";
+import Partnership from "./pages/Partnership";
+import Contact from "./pages/Contact";
+import Software from "./pages/Software";
+import Insight from "./pages/Insight";
 import { Toaster } from "./components/ui/toaster";
 
 function AppRouter() {
@@ -52,6 +56,10 @@ function AppRouter() {
         <Route path="/stocks" element={<Stocks />} />
         <Route path="/mirror-trading" element={<MirrorTrading />} />
         <Route path="/company" element={<Company />} />
+        <Route path="/partnership" element={<Partnership />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/software" element={<Software />} />
+        <Route path="/insight" element={<Insight />} />
       </Routes>
       <Footer />
       <Toaster />
