@@ -551,7 +551,7 @@ const Admin = () => {
                     <Label htmlFor="platformName" className="text-gray-300">Platform Name</Label>
                     <Input
                       id="platformName"
-                      defaultValue="Moncaplus Copy Trading"
+                      defaultValue="Monacap Trading Pro"
                       className="bg-[#0a1628] border-gray-600 text-white"
                     />
                   </div>
@@ -581,7 +581,7 @@ const Admin = () => {
                     <Input
                       id="supportEmail"
                       type="email"
-                      defaultValue="support@moncaplus.com"
+                      defaultValue="support@monacaptradingpro.com"
                       className="bg-[#0a1628] border-gray-600 text-white"
                     />
                   </div>

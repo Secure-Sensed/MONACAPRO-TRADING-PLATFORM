@@ -32,7 +32,7 @@ const AuthCallback = () => {
         if (result.success) {
           toast({
             title: 'Login Successful',
-            description: 'Welcome to Moncaplus!'
+            description: 'Welcome to Monacap Trading Pro!'
           });
           
           // Navigate to dashboard with user data
