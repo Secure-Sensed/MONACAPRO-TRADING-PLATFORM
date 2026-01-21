@@ -212,7 +212,7 @@ const Navbar = () => {
                   </Link>
                 </motion.div>
               ))}
-              {!isLoggedIn ? (
+              {!isAuthenticated ? (
                 <motion.div 
                   className="flex flex-col space-y-2 pt-4"
                   initial={{ y: 20, opacity: 0 }}
@@ -235,15 +235,23 @@ const Navbar = () => {
                 </motion.div>
               ) : (
                 <motion.div
+                  className="flex flex-col space-y-2 pt-4"
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.5 }}
                 >
                   <Button
-                    onClick={() => navigate('/dashboard')}
+                    onClick={() => navigate(user?.role === 'admin' ? '/admin' : '/dashboard')}
                     className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white w-full"
                   >
-                    Dashboard
+                    {user?.role === 'admin' ? 'Admin Panel' : 'Dashboard'}
+                  </Button>
+                  <Button
+                    onClick={handleLogout}
+                    variant="outline"
+                    className="border-red-400 text-red-400 w-full"
+                  >
+                    Logout
                   </Button>
                 </motion.div>
               )}
