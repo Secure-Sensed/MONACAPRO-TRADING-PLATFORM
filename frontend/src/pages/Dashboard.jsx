@@ -47,6 +47,11 @@ const Dashboard = () => {
     fetchDashboardData();
     fetchLeadTraders();
     fetchCryptoPrices();
+    
+    // Auto-refresh crypto prices every 30 seconds
+    const priceInterval = setInterval(fetchCryptoPrices, 30000);
+    
+    return () => clearInterval(priceInterval);
   }, []);
 
   const fetchDashboardData = async () => {
