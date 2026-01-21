@@ -1,8 +1,10 @@
 import "./App.css";
+import "./i18n";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import ChatWidget from "./components/ChatWidget";
 import AuthCallback from "./components/AuthCallback";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
@@ -62,6 +64,7 @@ function AppRouter() {
         <Route path="/insight" element={<Insight />} />
       </Routes>
       <Footer />
+      <ChatWidget />
       <Toaster />
     </>
   );
