@@ -11,6 +11,9 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
+import Stocks from "./pages/Stocks";
+import MirrorTrading from "./pages/MirrorTrading";
+import Company from "./pages/Company";
 import { Toaster } from "./components/ui/toaster";
 
 function AppRouter() {
@@ -46,6 +49,9 @@ function AppRouter() {
             </ProtectedRoute>
           } 
         />
+        <Route path="/stocks" element={<Stocks />} />
+        <Route path="/mirror-trading" element={<MirrorTrading />} />
+        <Route path="/company" element={<Company />} />
       </Routes>
       <Footer />
       <Toaster />
