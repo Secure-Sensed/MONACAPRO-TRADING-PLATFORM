@@ -100,14 +100,7 @@ const Navbar = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
           >
-            <motion.button 
-              className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors"
-              whileHover={{ scale: 1.05 }}
-            >
-              <img src="https://flagcdn.com/w20/gb.png" alt="English" className="w-5 h-4" />
-              <span>English</span>
-              <ChevronDown className="w-4 h-4" />
-            </motion.button>
+            <LanguageSelector />
             {!isAuthenticated ? (
               <>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
