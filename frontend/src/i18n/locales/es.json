@@ -1,0 +1,156 @@
+{
+  "nav": {
+    "company": "Empresa",
+    "mirrorTrading": "Trading Espejo",
+    "stocks": "Acciones",
+    "software": "Software",
+    "insight": "Perspectivas",
+    "login": "Iniciar Sesión",
+    "register": "Registro",
+    "dashboard": "Panel",
+    "adminPanel": "Panel Admin",
+    "logout": "Cerrar Sesión",
+    "welcome": "Bienvenido"
+  },
+  "home": {
+    "hero": {
+      "title": "Desbloquea Tu Potencial Financiero",
+      "titleHighlight": "con Monacap",
+      "subtitle": "Una plataforma de trading que apoya tus objetivos financieros proporcionando herramientas avanzadas, perspectivas expertas y un entorno seguro para tus inversiones.",
+      "getStarted": "Comenzar",
+      "learnMore": "Saber Más"
+    },
+    "features": {
+      "pipSpreads": "Spreads Pip",
+      "leverage": "Apalancamiento hasta",
+      "microLot": "Trading Micro Lote",
+      "fastWithdrawals": "Retiros Rápidos",
+      "negativeBalance": "Protección de Saldo Negativo"
+    },
+    "copyTrading": {
+      "title": "Copy Trading con MCT",
+      "description": "El copy trading es una estrategia de inversión innovadora que te permite replicar automáticamente las operaciones de traders experimentados y exitosos."
+    },
+    "stats": {
+      "countries": "países",
+      "traderAccounts": "Cuentas de traders",
+      "monthlyTransactions": "Transacciones mensuales",
+      "averageMonthlyPayouts": "Pagos mensuales promedio",
+      "monthlyTurnover": "Volumen mensual"
+    },
+    "achievements": "Logros",
+    "values": {
+      "title": "Nuestros Valores",
+      "transparency": "Transparencia",
+      "trustSecurity": "Confianza y Seguridad",
+      "empowerment": "Empoderamiento"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Bienvenido de Nuevo",
+      "subtitle": "Inicia sesión para acceder a tu cuenta de trading",
+      "email": "Correo Electrónico",
+      "password": "Contraseña",
+      "submitBtn": "Iniciar Sesión",
+      "loggingIn": "Iniciando sesión...",
+      "orContinue": "O continuar con",
+      "google": "Continuar con Google",
+      "noAccount": "¿No tienes una cuenta?",
+      "registerHere": "Regístrate aquí",
+      "adminHint": "Los usuarios admin pueden iniciar sesión aquí con sus credenciales"
+    },
+    "register": {
+      "title": "Crear Cuenta",
+      "subtitle": "Comienza tu viaje de trading hoy",
+      "fullName": "Nombre Completo",
+      "email": "Correo Electrónico",
+      "password": "Contraseña",
+      "confirmPassword": "Confirmar Contraseña",
+      "submitBtn": "Crear Cuenta",
+      "creating": "Creando Cuenta...",
+      "hasAccount": "¿Ya tienes una cuenta?",
+      "loginHere": "Inicia sesión aquí"
+    }
+  },
+  "dashboard": {
+    "title": "Panel",
+    "portfolio": "Resumen del Portafolio",
+    "balance": "Saldo",
+    "profit": "Ganancia",
+    "activeCopies": "Copias Activas",
+    "totalTrades": "Total de Operaciones",
+    "topTraders": "Mejores Traders",
+    "copyTrader": "Copiar Trader",
+    "recentActivity": "Actividad Reciente"
+  },
+  "stocks": {
+    "title": "Trading de",
+    "titleHighlight": "Acciones",
+    "subtitle": "Accede a más de 2,100 acciones de las bolsas ASX, NASDAQ y NYSE con spreads competitivos",
+    "search": "Buscar acciones por símbolo o nombre...",
+    "features": {
+      "stocks": "2,100+ Acciones",
+      "lowFees": "Bajas Comisiones",
+      "realTime": "Datos en Tiempo Real",
+      "leverage": "Hasta 1:20"
+    },
+    "trade": "Operar",
+    "volume": "Volumen",
+    "marketCap": "Cap. Mercado"
+  },
+  "mirrorTrading": {
+    "title": "Trading",
+    "titleHighlight": "Espejo",
+    "subtitle": "Copia las operaciones de traders expertos automáticamente. Benefíciate de estrategias profesionales sin necesidad de operar tú mismo.",
+    "startCopying": "Comenzar a Copiar",
+    "whyChoose": "Por Qué Elegir",
+    "howItWorks": "Cómo Funciona",
+    "topTraders": "Mejores Traders",
+    "viewAll": "Ver Todos los Traders"
+  },
+  "contact": {
+    "title": "Contáctanos",
+    "titleHighlight": "",
+    "subtitle": "¿Tienes preguntas o necesitas ayuda? Nuestro equipo está aquí para ayudarte 24/7.",
+    "form": {
+      "title": "Envíanos un Mensaje",
+      "fullName": "Nombre Completo",
+      "email": "Correo Electrónico",
+      "subject": "Asunto",
+      "message": "Mensaje",
+      "send": "Enviar Mensaje",
+      "sending": "Enviando..."
+    },
+    "info": {
+      "email": "Correo",
+      "phone": "Teléfono",
+      "address": "Dirección",
+      "supportHours": "Horario de Soporte",
+      "support247": "Soporte 24/7"
+    },
+    "faq": {
+      "title": "Preguntas Frecuentes"
+    }
+  },
+  "footer": {
+    "riskWarning": "Advertencia de Riesgo:",
+    "riskText": "Los CFDs son instrumentos complejos y conllevan un alto riesgo de perder dinero rápidamente debido al apalancamiento.",
+    "quickLinks": "Enlaces Rápidos",
+    "company": "Empresa",
+    "allRights": "Todos los derechos reservados."
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "confirm": "Confirmar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "viewMore": "Ver Más"
+  }
+}

@@ -1,0 +1,156 @@
+{
+  "nav": {
+    "company": "Entreprise",
+    "mirrorTrading": "Trading Miroir",
+    "stocks": "Actions",
+    "software": "Logiciel",
+    "insight": "Analyses",
+    "login": "Connexion",
+    "register": "Inscription",
+    "dashboard": "Tableau de Bord",
+    "adminPanel": "Panneau Admin",
+    "logout": "Déconnexion",
+    "welcome": "Bienvenue"
+  },
+  "home": {
+    "hero": {
+      "title": "Libérez Votre Potentiel Financier",
+      "titleHighlight": "avec Monacap",
+      "subtitle": "Une plateforme de trading qui soutient vos objectifs financiers en fournissant des outils avancés, des analyses expertes et un environnement sécurisé pour vos investissements.",
+      "getStarted": "Commencer",
+      "learnMore": "En Savoir Plus"
+    },
+    "features": {
+      "pipSpreads": "Spreads Pip",
+      "leverage": "Effet de levier jusqu'à",
+      "microLot": "Trading Micro Lot",
+      "fastWithdrawals": "Retraits Rapides",
+      "negativeBalance": "Protection Solde Négatif"
+    },
+    "copyTrading": {
+      "title": "Copy Trading avec MCT",
+      "description": "Le copy trading est une stratégie d'investissement innovante qui vous permet de répliquer automatiquement les trades de traders expérimentés et performants."
+    },
+    "stats": {
+      "countries": "pays",
+      "traderAccounts": "Comptes traders",
+      "monthlyTransactions": "Transactions mensuelles",
+      "averageMonthlyPayouts": "Paiements mensuels moyens",
+      "monthlyTurnover": "Volume mensuel"
+    },
+    "achievements": "Réalisations",
+    "values": {
+      "title": "Nos Valeurs",
+      "transparency": "Transparence",
+      "trustSecurity": "Confiance et Sécurité",
+      "empowerment": "Autonomisation"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Bon Retour",
+      "subtitle": "Connectez-vous pour accéder à votre compte de trading",
+      "email": "Email",
+      "password": "Mot de passe",
+      "submitBtn": "Connexion",
+      "loggingIn": "Connexion en cours...",
+      "orContinue": "Ou continuer avec",
+      "google": "Continuer avec Google",
+      "noAccount": "Vous n'avez pas de compte?",
+      "registerHere": "Inscrivez-vous ici",
+      "adminHint": "Les utilisateurs admin peuvent se connecter ici avec leurs identifiants"
+    },
+    "register": {
+      "title": "Créer un Compte",
+      "subtitle": "Commencez votre voyage de trading aujourd'hui",
+      "fullName": "Nom Complet",
+      "email": "Email",
+      "password": "Mot de passe",
+      "confirmPassword": "Confirmer le Mot de passe",
+      "submitBtn": "Créer un Compte",
+      "creating": "Création du Compte...",
+      "hasAccount": "Vous avez déjà un compte?",
+      "loginHere": "Connectez-vous ici"
+    }
+  },
+  "dashboard": {
+    "title": "Tableau de Bord",
+    "portfolio": "Aperçu du Portefeuille",
+    "balance": "Solde",
+    "profit": "Profit",
+    "activeCopies": "Copies Actives",
+    "totalTrades": "Total des Trades",
+    "topTraders": "Meilleurs Traders",
+    "copyTrader": "Copier Trader",
+    "recentActivity": "Activité Récente"
+  },
+  "stocks": {
+    "title": "Trading",
+    "titleHighlight": "d'Actions",
+    "subtitle": "Accédez à plus de 2 100 actions des bourses ASX, NASDAQ et NYSE avec des spreads compétitifs",
+    "search": "Rechercher des actions par symbole ou nom...",
+    "features": {
+      "stocks": "2 100+ Actions",
+      "lowFees": "Frais Réduits",
+      "realTime": "Données Temps Réel",
+      "leverage": "Jusqu'à 1:20"
+    },
+    "trade": "Trader",
+    "volume": "Volume",
+    "marketCap": "Cap. Marché"
+  },
+  "mirrorTrading": {
+    "title": "Trading",
+    "titleHighlight": "Miroir",
+    "subtitle": "Copiez automatiquement les trades des traders experts. Bénéficiez de stratégies professionnelles sans avoir à trader vous-même.",
+    "startCopying": "Commencer à Copier",
+    "whyChoose": "Pourquoi Choisir",
+    "howItWorks": "Comment Ça Marche",
+    "topTraders": "Meilleurs Traders",
+    "viewAll": "Voir Tous les Traders"
+  },
+  "contact": {
+    "title": "Contactez",
+    "titleHighlight": "Nous",
+    "subtitle": "Vous avez des questions ou besoin d'aide? Notre équipe est là pour vous aider 24h/24.",
+    "form": {
+      "title": "Envoyez-nous un Message",
+      "fullName": "Nom Complet",
+      "email": "Email",
+      "subject": "Sujet",
+      "message": "Message",
+      "send": "Envoyer le Message",
+      "sending": "Envoi en cours..."
+    },
+    "info": {
+      "email": "Email",
+      "phone": "Téléphone",
+      "address": "Adresse",
+      "supportHours": "Heures de Support",
+      "support247": "Support 24/7"
+    },
+    "faq": {
+      "title": "Questions Fréquentes"
+    }
+  },
+  "footer": {
+    "riskWarning": "Avertissement sur les Risques:",
+    "riskText": "Les CFD sont des instruments complexes et présentent un risque élevé de perte rapide en capital en raison de l'effet de levier.",
+    "quickLinks": "Liens Rapides",
+    "company": "Entreprise",
+    "allRights": "Tous droits réservés."
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "viewMore": "Voir Plus"
+  }
+}

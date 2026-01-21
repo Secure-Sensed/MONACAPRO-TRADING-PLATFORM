@@ -1,0 +1,156 @@
+{
+  "nav": {
+    "company": "Company",
+    "mirrorTrading": "Mirror Trading",
+    "stocks": "Stocks",
+    "software": "Software",
+    "insight": "Insight",
+    "login": "Login",
+    "register": "Registration",
+    "dashboard": "Dashboard",
+    "adminPanel": "Admin Panel",
+    "logout": "Logout",
+    "welcome": "Welcome"
+  },
+  "home": {
+    "hero": {
+      "title": "Unlock Your Financial Potential",
+      "titleHighlight": "with Monacap",
+      "subtitle": "A trading platform that supports your financial goals by providing advanced tools, expert insights, and a secure environment for your investments.",
+      "getStarted": "Get Started",
+      "learnMore": "Learn More"
+    },
+    "features": {
+      "pipSpreads": "Pip Spreads",
+      "leverage": "Leverage up to",
+      "microLot": "Micro Lot Trading",
+      "fastWithdrawals": "Fast Withdrawals",
+      "negativeBalance": "Negative Balance Protection"
+    },
+    "copyTrading": {
+      "title": "Copy Trading with MCT",
+      "description": "Copy trading is an innovative investment strategy that allows you to automatically replicate the trades of experienced and successful traders."
+    },
+    "stats": {
+      "countries": "countries",
+      "traderAccounts": "Trader accounts",
+      "monthlyTransactions": "Monthly transactions",
+      "averageMonthlyPayouts": "Average monthly payouts",
+      "monthlyTurnover": "Monthly trade turnover"
+    },
+    "achievements": "Achievements",
+    "values": {
+      "title": "Our Values",
+      "transparency": "Transparency",
+      "trustSecurity": "Trust & Security",
+      "empowerment": "Empowerment"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome Back",
+      "subtitle": "Login to access your trading account",
+      "email": "Email",
+      "password": "Password",
+      "submitBtn": "Login",
+      "loggingIn": "Logging in...",
+      "orContinue": "Or continue with",
+      "google": "Continue with Google",
+      "noAccount": "Don't have an account?",
+      "registerHere": "Register here",
+      "adminHint": "Admin users can login here using their credentials"
+    },
+    "register": {
+      "title": "Create Account",
+      "subtitle": "Start your trading journey today",
+      "fullName": "Full Name",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "submitBtn": "Create Account",
+      "creating": "Creating Account...",
+      "hasAccount": "Already have an account?",
+      "loginHere": "Login here"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "portfolio": "Portfolio Overview",
+    "balance": "Balance",
+    "profit": "Profit",
+    "activeCopies": "Active Copies",
+    "totalTrades": "Total Trades",
+    "topTraders": "Top Traders",
+    "copyTrader": "Copy Trader",
+    "recentActivity": "Recent Activity"
+  },
+  "stocks": {
+    "title": "Stock",
+    "titleHighlight": "Trading",
+    "subtitle": "Access over 2,100 stocks from ASX, NASDAQ & NYSE exchanges with competitive spreads",
+    "search": "Search stocks by symbol or name...",
+    "features": {
+      "stocks": "2,100+ Stocks",
+      "lowFees": "Low Fees",
+      "realTime": "Real-Time Data",
+      "leverage": "Up to 1:20"
+    },
+    "trade": "Trade",
+    "volume": "Volume",
+    "marketCap": "Market Cap"
+  },
+  "mirrorTrading": {
+    "title": "Mirror",
+    "titleHighlight": "Trading",
+    "subtitle": "Copy the trades of expert traders automatically. Benefit from professional strategies without needing to trade yourself.",
+    "startCopying": "Start Copying Now",
+    "whyChoose": "Why Choose",
+    "howItWorks": "How It Works",
+    "topTraders": "Top Performing Traders",
+    "viewAll": "View All Traders"
+  },
+  "contact": {
+    "title": "Contact",
+    "titleHighlight": "Us",
+    "subtitle": "Have questions or need assistance? Our team is here to help you 24/7.",
+    "form": {
+      "title": "Send Us a Message",
+      "fullName": "Full Name",
+      "email": "Email",
+      "subject": "Subject",
+      "message": "Message",
+      "send": "Send Message",
+      "sending": "Sending..."
+    },
+    "info": {
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Address",
+      "supportHours": "Support Hours",
+      "support247": "24/7 Live Support"
+    },
+    "faq": {
+      "title": "Frequently Asked Questions"
+    }
+  },
+  "footer": {
+    "riskWarning": "Risk Warning:",
+    "riskText": "CFDs are complex instruments and come with a high risk of losing money rapidly due to leverage.",
+    "quickLinks": "Quick Links",
+    "company": "Company",
+    "allRights": "All rights reserved."
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "viewMore": "View More"
+  }
+}
