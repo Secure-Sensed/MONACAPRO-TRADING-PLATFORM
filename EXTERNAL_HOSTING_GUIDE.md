@@ -10,7 +10,7 @@
 # --- FRONTEND .env (External Hosting - Vercel, Netlify, etc.) ---
 # Create a .env file in your frontend directory with:
 
-REACT_APP_BACKEND_URL=https://monca-trading-clone.preview.emergentagent.com
+REACT_APP_BACKEND_URL=https://monacaptrade.preview.emergentagent.com
 
 # That's it! The frontend only needs to know where the backend is.
 # Replace with your actual Emergent backend URL
@@ -75,12 +75,12 @@ PORT=8001
 # --- VERCEL (Frontend) ---
 # In Vercel Dashboard → Settings → Environment Variables, add:
 # Key: REACT_APP_BACKEND_URL
-# Value: https://monca-trading-clone.preview.emergentagent.com
+# Value: https://monacaptrade.preview.emergentagent.com
 
 # --- NETLIFY (Frontend) ---
 # In Netlify Dashboard → Site Settings → Build & Deploy → Environment, add:
 # Key: REACT_APP_BACKEND_URL
-# Value: https://monca-trading-clone.preview.emergentagent.com
+# Value: https://monacaptrade.preview.emergentagent.com
 
 # --- HEROKU (Backend) ---
 # heroku config:set MONGO_URL=your_mongodb_url

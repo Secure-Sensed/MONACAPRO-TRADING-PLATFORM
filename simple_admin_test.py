@@ -6,7 +6,7 @@ Simple test to verify admin access restrictions
 import requests
 import json
 
-BACKEND_URL = "https://monca-trading-clone.preview.emergentagent.com/api"
+BACKEND_URL = "https://monacaptrade.preview.emergentagent.com/api"
 
 def test_admin_restrictions():
     print("=== Testing Admin Access Restrictions ===")

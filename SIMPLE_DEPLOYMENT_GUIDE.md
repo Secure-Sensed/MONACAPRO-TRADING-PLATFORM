@@ -16,7 +16,7 @@
 ### Create `.env` file in your frontend directory:
 
 ```env
-REACT_APP_BACKEND_URL=https://monca-trading-clone.preview.emergentagent.com
+REACT_APP_BACKEND_URL=https://monacaptrade.preview.emergentagent.com
 ```
 
 **That's it!** Just one variable needed for frontend.
@@ -44,7 +44,7 @@ REACT_APP_BACKEND_URL=https://monca-trading-clone.preview.emergentagent.com
 
 4. Add environment variable in Vercel Dashboard:
    - Go to: Settings → Environment Variables
-   - Add: `REACT_APP_BACKEND_URL` = `https://monca-trading-clone.preview.emergentagent.com`
+   - Add: `REACT_APP_BACKEND_URL` = `https://monacaptrade.preview.emergentagent.com`
    - Redeploy
 
 ### Option B: Netlify
@@ -62,7 +62,7 @@ REACT_APP_BACKEND_URL=https://monca-trading-clone.preview.emergentagent.com
 
 3. Add environment variable in Netlify Dashboard:
    - Go to: Site Settings → Build & Deploy → Environment
-   - Add: `REACT_APP_BACKEND_URL` = `https://monca-trading-clone.preview.emergentagent.com`
+   - Add: `REACT_APP_BACKEND_URL` = `https://monacaptrade.preview.emergentagent.com`
 
 ### Option C: Your Own Server (VPS/Cloud)
 
@@ -88,7 +88,7 @@ REACT_APP_BACKEND_URL=https://monca-trading-clone.preview.emergentagent.com
        
        # Add environment variable
        location /env-config.js {
-           return 200 'window.ENV = { REACT_APP_BACKEND_URL: "https://monca-trading-clone.preview.emergentagent.com" };';
+           return 200 'window.ENV = { REACT_APP_BACKEND_URL: "https://monacaptrade.preview.emergentagent.com" };';
            add_header Content-Type application/javascript;
        }
    }
@@ -101,7 +101,7 @@ REACT_APP_BACKEND_URL=https://monca-trading-clone.preview.emergentagent.com
 Update `/app/backend/.env` on Emergent to allow your frontend domain:
 
 ```env
-CORS_ORIGINS=http://localhost:3000,https://monca-trading-clone.preview.emergentagent.com,https://yourdomain.com,https://www.yourdomain.com
+CORS_ORIGINS=http://localhost:3000,https://monacaptrade.preview.emergentagent.com,https://yourdomain.com,https://www.yourdomain.com
 ```
 
 **Replace `yourdomain.com` with your actual domain!**
@@ -117,7 +117,7 @@ sudo supervisorctl restart backend
 
 ### Test Backend API:
 ```bash
-curl https://monca-trading-clone.preview.emergentagent.com/api/traders
+curl https://monacaptrade.preview.emergentagent.com/api/traders
 ```
 
 Should return JSON with traders list.
@@ -182,7 +182,7 @@ Example: You deploy to `www.monacaptradingpro.com`
 
 3. **Update frontend .env:**
    ```env
-   REACT_APP_BACKEND_URL=https://monca-trading-clone.preview.emergentagent.com
+   REACT_APP_BACKEND_URL=https://monacaptrade.preview.emergentagent.com
    ```
 
 4. **Redeploy frontend** (on Vercel/Netlify)
