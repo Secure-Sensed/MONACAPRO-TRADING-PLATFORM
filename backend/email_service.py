@@ -10,9 +10,9 @@ logger = logging.getLogger(__name__)
 # Email configuration from environment variables
 SMTP_HOST = os.getenv('SMTP_HOST', 'smtp.gmail.com')  # Change to your webmail SMTP
 SMTP_PORT = int(os.getenv('SMTP_PORT', '587'))
-SMTP_USERNAME = os.getenv('SMTP_USERNAME', 'noreply@monacaptradingpro.com')
+SMTP_USERNAME = os.getenv('SMTP_USERNAME', 'noreply@monacaptradingpro.shop')
 SMTP_PASSWORD = os.getenv('SMTP_PASSWORD', '')  # Set your webmail password
-SMTP_FROM_EMAIL = os.getenv('SMTP_FROM_EMAIL', 'noreply@monacaptradingpro.com')
+SMTP_FROM_EMAIL = os.getenv('SMTP_FROM_EMAIL', 'noreply@monacaptradingpro.shop')
 SMTP_FROM_NAME = os.getenv('SMTP_FROM_NAME', 'Monacap Trading Pro')
 APP_URL = os.getenv('APP_URL', 'http://localhost:3000')  # Frontend URL for email links
 

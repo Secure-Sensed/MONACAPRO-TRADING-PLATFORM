@@ -1,0 +1,13 @@
+
+{
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://<your-firebase-function-url>.cloudfunctions.net/api/(.*)"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
