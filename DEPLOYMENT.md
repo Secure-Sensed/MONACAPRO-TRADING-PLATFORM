@@ -6,8 +6,7 @@ A full-stack trading platform built with React, Express, and Firebase.
 
 ```
 ├── frontend/          # React frontend application
-├── backend/           # Express backend API
-├── package.json       # Root monorepo configuration
+├── backend/           # Express backend API (separate deployment)
 └── vercel.json        # Vercel deployment configuration
 ```
 
@@ -19,12 +18,19 @@ A full-stack trading platform built with React, Express, and Firebase.
 
 ### Setup
 
-1. **Install all dependencies:**
+1. **Install frontend dependencies:**
 ```bash
-npm run install-all
+cd frontend
+npm install --legacy-peer-deps
 ```
 
-2. **Configure environment variables:**
+2. **Install backend dependencies:**
+```bash
+cd backend
+npm install
+```
+
+3. **Configure environment variables:**
 
 **Frontend (.env.local):**
 ```
@@ -52,63 +58,89 @@ SMTP_PASSWORD=your_password
 
 ### Running Locally
 
-**Development mode (both frontend and backend):**
-```bash
-npm run dev
-```
-
 **Frontend only:**
 ```bash
-npm run frontend
+cd frontend
+npm start
 ```
 
 **Backend only:**
 ```bash
-npm run backend
+cd backend
+npm start
 ```
 
-## Deployment to Vercel
+## Deployment
 
-### Prerequisites
-- Vercel account
-- GitHub repository
+### Frontend Deployment to Vercel
 
-### Environment Variables Setup
+1. **Connect to Vercel:**
+   - Go to https://vercel.com
+   - Click "New Project"
+   - Import your GitHub repository
+   - Select "Other" for framework detection (it will auto-detect Next.js/React)
 
-Set these in Vercel Project Settings → Environment Variables:
+2. **Set Environment Variables:**
+   - In Vercel Project Settings → Environment Variables, add:
+   
+   ```
+   REACT_APP_FIREBASE_API_KEY=your_api_key
+   REACT_APP_FIREBASE_AUTH_DOMAIN=vct-trading.firebaseapp.com
+   REACT_APP_FIREBASE_PROJECT_ID=vct-trading
+   REACT_APP_FIREBASE_STORAGE_BUCKET=vct-trading.firebasestorage.app
+   REACT_APP_FIREBASE_MESSAGING_SENDER_ID=66965555658
+   REACT_APP_FIREBASE_APP_ID=1:66965555658:web:4b06dbb9e7d1e26fbce733
+   REACT_APP_BACKEND_URL=https://your-backend-url.com
+   ```
 
-**Frontend Variables:**
-- `REACT_APP_FIREBASE_API_KEY`
-- `REACT_APP_FIREBASE_AUTH_DOMAIN`
-- `REACT_APP_FIREBASE_PROJECT_ID`
-- `REACT_APP_FIREBASE_STORAGE_BUCKET`
-- `REACT_APP_FIREBASE_MESSAGING_SENDER_ID`
-- `REACT_APP_FIREBASE_APP_ID`
-- `REACT_APP_BACKEND_URL` (set to your Vercel deployment URL)
+3. **Deploy:**
+   - Click Deploy - Vercel will automatically build the frontend from the `frontend/` directory
 
-**Backend Variables:**
-- `FIREBASE_SERVICE_ACCOUNT_JSON`
-- `JWT_SECRET`
-- `APP_URL` (your Vercel deployment URL)
-- `CORS_ORIGINS` (your Vercel deployment URL)
-- `SMTP_HOST`
-- `SMTP_PORT`
-- `SMTP_USERNAME`
-- `SMTP_PASSWORD`
-- `SMTP_FROM_EMAIL`
-- `SMTP_FROM_NAME`
+### Backend Deployment
 
-### Deploy Steps
+**Option 1: Deploy to Railway.app (Recommended)**
 
-1. Push your code to GitHub
-2. Connect your GitHub repo to Vercel
-3. Vercel will automatically detect the `vercel.json` configuration
-4. Set all required environment variables
-5. Click Deploy
+1. Sign up at https://railway.app
+2. Create new project → Deploy from GitHub
+3. Select this repository
+4. Set environment variables in Railway dashboard:
+   ```
+   FIREBASE_SERVICE_ACCOUNT_JSON={"type":"service_account",...}
+   PORT=8001
+   JWT_SECRET=your_jwt_secret
+   APP_URL=https://your-vercel-frontend-url.vercel.app
+   CORS_ORIGINS=https://your-vercel-frontend-url.vercel.app
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=587
+   SMTP_USERNAME=your_email
+   SMTP_PASSWORD=your_app_password
+   SMTP_FROM_EMAIL=noreply@monacaptradingpro.com
+   SMTP_FROM_NAME=Monacap Trading Pro
+   ```
+5. Deploy
 
-The application will be built and deployed with:
-- Frontend served from the root path
-- Backend API available at `/api/*` routes
+**Option 2: Deploy to Heroku**
+
+```bash
+heroku create your-app-name
+heroku buildpacks:add --index 1 https://github.com/timanovsky/subdir-heroku-buildpack
+heroku config:set PROJECT_PATH=backend
+git push heroku main
+```
+
+**Option 3: Docker Deployment (Self-hosted)**
+
+Create `backend/Dockerfile`:
+```dockerfile
+FROM node:20-alpine
+WORKDIR /app
+COPY . .
+RUN npm install
+EXPOSE 8001
+CMD ["npm", "start"]
+```
+
+Then deploy using Docker to your server.
 
 ## Architecture
 
@@ -118,13 +150,14 @@ The application will be built and deployed with:
 - **Authentication:** Firebase Auth
 - **State Management:** Context API
 - **HTTP Client:** Axios
+- **Build Tool:** Create React App
 
 ### Backend
 - **Framework:** Express.js
 - **Database:** Firebase Firestore
 - **Authentication:** Firebase Admin SDK
 - **Email Service:** Nodemailer
-- **CORS:** Enabled for frontend
+- **Runtime:** Node.js 20.x
 
 ## Key Features
 
