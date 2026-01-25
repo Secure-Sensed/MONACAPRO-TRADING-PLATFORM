@@ -381,6 +381,158 @@ app.post(
     })
   );
 
+app.post(
+    "/api/copy/start",
+    requireAuth,
+    asyncHandler(async (req, res) => {
+      const userId = req.user.user_id;
+      const { traderId, amount } = req.body;
+
+      if (!traderId || !amount) {
+        return res.status(400).json({
+          success: false,
+          detail: "Trader ID and amount are required"
+        });
+      }
+
+      const numericAmount = Number(amount);
+      if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+        return res.status(400).json({
+          success: false,
+          detail: "Amount must be greater than 0"
+        });
+      }
+
+      // Check trader exists
+      const traderSnap = await db.collection("traders").doc(traderId).get();
+      if (!traderSnap.exists) {
+        return res.status(404).json({
+          success: false,
+          detail: "Trader not found"
+        });
+      }
+
+      // Check user balance
+      const userRef = await resolveUserRef(db, userId);
+      const userSnap = await userRef?.get();
+      const balance = userSnap?.data()?.balance || 0;
+
+      if (numericAmount > balance) {
+        return res.status(400).json({
+          success: false,
+          detail: "Insufficient balance"
+        });
+      }
+
+      const copyTradeId = `copy_${crypto.randomBytes(8).toString("hex")}`;
+      const now = new Date();
+      const copyTradeDoc = {
+        copy_trade_id: copyTradeId,
+        user_id: userId,
+        trader_id: traderId,
+        amount: numericAmount,
+        started_at: now,
+        current_profit: 0,
+        status: "active",
+        created_at: now
+      };
+
+      await db.collection("copy_trades").doc(copyTradeId).set(copyTradeDoc);
+
+      res.status(201).json({
+        success: true,
+        message: "Copy trade started successfully",
+        copyTrade: normalizeRecord(copyTradeDoc)
+      });
+    })
+  );
+
+app.get(
+    "/api/copy/active",
+    requireAuth,
+    asyncHandler(async (req, res) => {
+      const userId = req.user.user_id;
+
+      const snapshot = await db
+        .collection("copy_trades")
+        .where("user_id", "==", userId)
+        .where("status", "==", "active")
+        .get();
+
+      const copyTrades = snapshot.docs.map((doc) => docToData(doc, "copy_trade_id"));
+
+      // Fetch trader details for each copy trade
+      const copyTradesWithTraders = await Promise.all(
+        copyTrades.map(async (copyTrade) => {
+          const traderSnap = await db
+            .collection("traders")
+            .doc(copyTrade.trader_id)
+            .get();
+          const trader = traderSnap.exists
+            ? normalizeRecord(docToData(traderSnap, "trader_id"))
+            : null;
+          return {
+            ...copyTrade,
+            trader
+          };
+        })
+      );
+
+      res.status(200).json({
+        success: true,
+        activeCopies: copyTradesWithTraders
+      });
+    })
+  );
+
+app.delete(
+    "/api/copy/:copyTradeId",
+    requireAuth,
+    asyncHandler(async (req, res) => {
+      const { copyTradeId } = req.params;
+      const userId = req.user.user_id;
+
+      const snapshot = await db
+        .collection("copy_trades")
+        .where("copy_trade_id", "==", copyTradeId)
+        .limit(1)
+        .get();
+
+      if (snapshot.empty) {
+        return res.status(404).json({
+          success: false,
+          detail: "Copy trade not found"
+        });
+      }
+
+      const copyTradeDoc = snapshot.docs[0];
+      const copyTradeData = copyTradeDoc.data();
+
+      // Verify ownership
+      if (copyTradeData.user_id !== userId) {
+        return res.status(403).json({
+          success: false,
+          detail: "You can only stop your own copy trades"
+        });
+      }
+
+      // Update status to stopped instead of deleting
+      await copyTradeDoc.ref.set(
+        {
+          status: "stopped",
+          ended_at: new Date(),
+          updated_at: new Date()
+        },
+        { merge: true }
+      );
+
+      res.status(200).json({
+        success: true,
+        message: "Copy trade stopped successfully"
+      });
+    })
+  );
+
 app.get(
     "/api/dashboard/stats",
     requireAuth,
