@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/apiClient';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -27,8 +27,6 @@ import {
 import { toast } from '../hooks/use-toast';
 import { useAuth } from '../context/AuthContext';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL + '/api';
-
 const Admin = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -43,6 +41,10 @@ const Admin = () => {
   const [plans, setPlans] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [transactionFilter, setTransactionFilter] = useState({
+    type: 'all',
+    status: 'all'
+  });
 
   useEffect(() => {
     if (!user || user.role !== 'admin') {
@@ -70,9 +72,7 @@ const Admin = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get(`${API_URL}/users`, {
-        withCredentials: true
-      });
+      const response = await api.get('/users');
       if (response.data.success) {
         setUsers(response.data.users);
       }
@@ -83,9 +83,7 @@ const Admin = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get(`${API_URL}/admin/stats`, {
-        withCredentials: true
-      });
+      const response = await api.get('/admin/stats');
       if (response.data.success) {
         setStats(response.data.stats);
       }
@@ -96,9 +94,7 @@ const Admin = () => {
 
   const fetchTraders = async () => {
     try {
-      const response = await axios.get(`${API_URL}/traders`, {
-        withCredentials: true
-      });
+      const response = await api.get('/traders');
       if (response.data.success) {
         setTraders(response.data.traders);
       }
@@ -109,9 +105,7 @@ const Admin = () => {
 
   const fetchPlans = async () => {
     try {
-      const response = await axios.get(`${API_URL}/plans`, {
-        withCredentials: true
-      });
+      const response = await api.get('/plans');
       if (response.data.success) {
         setPlans(response.data.plans);
       }
@@ -122,9 +116,7 @@ const Admin = () => {
 
   const fetchTransactions = async () => {
     try {
-      const response = await axios.get(`${API_URL}/transactions`, {
-        withCredentials: true
-      });
+      const response = await api.get('/transactions');
       if (response.data.success) {
         setTransactions(response.data.transactions);
       }
@@ -137,9 +129,7 @@ const Admin = () => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
     
     try {
-      await axios.delete(`${API_URL}/users/${userId}`, {
-        withCredentials: true
-      });
+      await api.delete(`/users/${userId}`);
       toast({
         title: 'User Deleted',
         description: 'User has been removed from the system'
@@ -158,10 +148,7 @@ const Admin = () => {
     const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
     
     try {
-      await axios.put(`${API_URL}/users/${userId}`, 
-        { status: newStatus },
-        { withCredentials: true }
-      );
+      await api.put(`/users/${userId}`, { status: newStatus });
       toast({
         title: 'Status Updated',
         description: 'User status has been changed'
@@ -178,9 +165,7 @@ const Admin = () => {
 
   const handleApproveTransaction = async (transactionId) => {
     try {
-      await axios.put(`${API_URL}/transactions/${transactionId}/approve`, {}, {
-        withCredentials: true
-      });
+      await api.put(`/transactions/${transactionId}/approve`, {});
       toast({
         title: 'Transaction Approved',
         description: 'Transaction has been processed successfully'
@@ -199,9 +184,7 @@ const Admin = () => {
     if (!window.confirm('Are you sure you want to reject this transaction?')) return;
     
     try {
-      await axios.put(`${API_URL}/transactions/${transactionId}/reject`, {}, {
-        withCredentials: true
-      });
+      await api.put(`/transactions/${transactionId}/reject`, {});
       toast({
         title: 'Transaction Rejected',
         description: 'Transaction has been cancelled'
@@ -215,6 +198,12 @@ const Admin = () => {
       });
     }
   };
+
+  const filteredTransactions = transactions.filter((tx) => {
+    const typeMatch = transactionFilter.type === 'all' || tx.type === transactionFilter.type;
+    const statusMatch = transactionFilter.status === 'all' || tx.status === transactionFilter.status;
+    return typeMatch && statusMatch;
+  });
 
   const handleLogout = async () => {
     await logout();
@@ -478,30 +467,69 @@ const Admin = () => {
                 <CardTitle className="text-white">Transaction Management</CardTitle>
               </CardHeader>
               <CardContent>
+                <div className="grid md:grid-cols-2 gap-4 mb-6">
+                  <div className="space-y-2">
+                    <Label className="text-gray-300">Filter by Type</Label>
+                    <select
+                      value={transactionFilter.type}
+                      onChange={(e) => setTransactionFilter({ ...transactionFilter, type: e.target.value })}
+                      className="w-full bg-[#0a1628] border border-gray-600 text-white rounded-md px-3 py-2"
+                    >
+                      <option value="all">All</option>
+                      <option value="deposit">Deposit</option>
+                      <option value="withdrawal">Withdrawal</option>
+                      <option value="trade">Trade</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-gray-300">Filter by Status</Label>
+                    <select
+                      value={transactionFilter.status}
+                      onChange={(e) => setTransactionFilter({ ...transactionFilter, status: e.target.value })}
+                      className="w-full bg-[#0a1628] border border-gray-600 text-white rounded-md px-3 py-2"
+                    >
+                      <option value="all">All</option>
+                      <option value="pending">Pending</option>
+                      <option value="completed">Completed</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                  </div>
+                </div>
                 <Table>
                   <TableHeader>
                     <TableRow className="border-gray-700">
                       <TableHead className="text-gray-400">ID</TableHead>
+                      <TableHead className="text-gray-400">User</TableHead>
                       <TableHead className="text-gray-400">Type</TableHead>
                       <TableHead className="text-gray-400">Amount</TableHead>
                       <TableHead className="text-gray-400">Method</TableHead>
+                      <TableHead className="text-gray-400">Details</TableHead>
                       <TableHead className="text-gray-400">Status</TableHead>
                       <TableHead className="text-gray-400">Date</TableHead>
                       <TableHead className="text-gray-400">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {transactions.map((transaction) => (
+                    {filteredTransactions.map((transaction) => (
                       <TableRow key={transaction.transaction_id} className="border-gray-700">
                         <TableCell className="text-white">{transaction.transaction_id}</TableCell>
+                        <TableCell className="text-gray-400">
+                          <div className="text-sm text-white">{transaction.user_name || 'User'}</div>
+                          <div className="text-xs text-gray-500">{transaction.user_email || transaction.user_id}</div>
+                        </TableCell>
                         <TableCell className="text-white capitalize">{transaction.type}</TableCell>
                         <TableCell className="text-white">${transaction.amount}</TableCell>
                         <TableCell className="text-gray-400">{transaction.method || transaction.asset || 'N/A'}</TableCell>
+                        <TableCell className="text-gray-400 text-xs">
+                          {transaction.details?.address || transaction.details?.account || '—'}
+                        </TableCell>
                         <TableCell>
                           <span className={`px-2 py-1 rounded-full text-xs ${
                             transaction.status === 'completed' 
                               ? 'bg-green-400/20 text-green-400' 
-                              : 'bg-yellow-400/20 text-yellow-400'
+                              : transaction.status === 'rejected'
+                                ? 'bg-red-400/20 text-red-400'
+                                : 'bg-yellow-400/20 text-yellow-400'
                           }`}>
                             {transaction.status}
                           </span>

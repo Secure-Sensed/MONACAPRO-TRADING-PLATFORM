@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext';
 
 const Register = () => {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -58,10 +58,23 @@ const Register = () => {
     setIsLoading(false);
   };
 
-  const handleGoogleSignup = () => {
-    // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-    const redirectUrl = window.location.origin + '/dashboard';
-    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+  const handleGoogleSignup = async () => {
+    setIsLoading(true);
+    const result = await loginWithGoogle();
+    if (result.success) {
+      toast({
+        title: 'Registration Successful',
+        description: 'Welcome to Monacap Trading Pro!'
+      });
+      navigate('/dashboard');
+    } else {
+      toast({
+        title: 'Registration Failed',
+        description: result.error || 'Google authentication failed',
+        variant: 'destructive'
+      });
+    }
+    setIsLoading(false);
   };
 
   return (

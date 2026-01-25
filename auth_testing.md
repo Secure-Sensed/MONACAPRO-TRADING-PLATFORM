@@ -1,83 +1,56 @@
-# Auth-Gated App Testing Playbook
+# Auth-Gated App Testing Playbook (Firebase Auth)
 
-## Step 1: Create Test User & Session
-```bash
-mongosh --eval "
-use('moncaplus');
-var userId = 'test-user-' + Date.now();
-var sessionToken = 'test_session_' + Date.now();
-db.users.insertOne({
-  user_id: userId,
-  email: 'test.user.' + Date.now() + '@example.com',
-  name: 'Test User',
-  picture: 'https://via.placeholder.com/150',
-  role: 'user',
-  balance: 5000,
-  status: 'active',
-  created_at: new Date()
-});
-db.user_sessions.insertOne({
-  user_id: userId,
-  session_token: sessionToken,
-  expires_at: new Date(Date.now() + 7*24*60*60*1000),
-  created_at: new Date()
-});
-print('Session token: ' + sessionToken);
-print('User ID: ' + userId);
-"
+## Step 1: Ensure Firebase is configured
+Set these backend env vars before testing:
+```
+FIREBASE_API_KEY=your_firebase_web_api_key
+FIREBASE_SERVICE_ACCOUNT_JSON='{"type":"service_account",...}'
+FIREBASE_STORAGE_BUCKET=your-project-id.appspot.com
 ```
 
-## Step 2: Test Backend API
+## Step 2: Register or Login (Firebase Auth)
+```bash
+# Register a user (returns Firebase ID token)
+curl -X POST "http://localhost:8001/api/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{"full_name":"Test User","email":"test.user@example.com","password":"testpassword123"}'
+
+# Login (returns Firebase ID token)
+curl -X POST "http://localhost:8001/api/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test.user@example.com","password":"testpassword123"}'
+```
+
+## Step 3: Test Backend API (Bearer ID Token)
 ```bash
 # Test auth endpoint
 curl -X GET "http://localhost:8001/api/auth/me" \
-  -H "Authorization: Bearer YOUR_SESSION_TOKEN"
+  -H "Authorization: Bearer YOUR_FIREBASE_ID_TOKEN"
 
 # Test traders endpoint
 curl -X GET "http://localhost:8001/api/traders"
 
 # Test dashboard stats
 curl -X GET "http://localhost:8001/api/dashboard/stats" \
-  -H "Authorization: Bearer YOUR_SESSION_TOKEN"
+  -H "Authorization: Bearer YOUR_FIREBASE_ID_TOKEN"
 ```
 
-## Step 3: Browser Testing
-```javascript
-// Set cookie and navigate
-await page.context.add_cookies([{
-    "name": "session_token",
-    "value": "YOUR_SESSION_TOKEN",
-    "domain": "localhost",
-    "path": "/",
-    "httpOnly": true,
-    "secure": false,
-    "sameSite": "Lax"
-}]);
-await page.goto("http://localhost:3000");
-```
+## Step 4: Browser Testing
+Login through the UI (Firebase Auth). The frontend stores the Firebase ID token in localStorage
+and attaches it to API requests automatically.
 
 ## Quick Debug
 ```bash
-# Check data format
+# Check user data
 mongosh --eval "
 use('moncaplus');
 db.users.find().limit(2).pretty();
-db.user_sessions.find().limit(2).pretty();
-"
-
-# Clean test data
-mongosh --eval "
-use('moncaplus');
-db.users.deleteMany({email: /test\.user\./});
-db.user_sessions.deleteMany({session_token: /test_session/});
 "
 ```
 
 ## Checklist
-- [ ] User document has user_id field (custom UUID)
-- [ ] Session user_id matches user's user_id exactly
-- [ ] All queries use `{"_id": 0}` projection
-- [ ] Backend queries use user_id
+- [ ] Firebase user exists for the email
+- [ ] Mongo user has firebase_uid populated
 - [ ] API returns user data with user_id field
 - [ ] Browser loads dashboard (not login page)
 
@@ -87,6 +60,6 @@ db.user_sessions.deleteMany({session_token: /test_session/});
 ✅ CRUD operations work
 
 ## Failure Indicators
-❌ "User not found" errors
+❌ "Invalid or expired token" errors
 ❌ 401 Unauthorized responses
 ❌ Redirect to login page

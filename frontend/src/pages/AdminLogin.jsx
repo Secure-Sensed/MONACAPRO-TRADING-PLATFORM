@@ -6,12 +6,11 @@ import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { toast } from '../hooks/use-toast';
 import { Shield } from 'lucide-react';
-import axios from 'axios';
-
-const API_URL = process.env.REACT_APP_BACKEND_URL + '/api';
+import { useAuth } from '../context/AuthContext';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     username: '',
     password: ''
@@ -30,35 +29,16 @@ const AdminLogin = () => {
     setIsLoading(true);
     
     try {
-      // Login with username (convert to email)
       const email = `${formData.username}@monacaptradingpro.com`;
-      
-      const response = await axios.post(`${API_URL}/auth/login`, {
-        email: email,
-        password: formData.password
-      }, {
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (response.data.success) {
-        // Store token
-        localStorage.setItem('session_token', response.data.token);
-        
-        // Set axios default header for subsequent requests
-        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
-        
-        // Verify admin role
-        if (response.data.user.role === 'admin') {
+      const result = await login(email, formData.password);
+
+      if (result.success) {
+        if (result.user?.role === 'admin') {
           toast({
             title: 'Admin Login Successful',
-            description: `Welcome ${response.data.user.full_name}!`
+            description: `Welcome ${result.user.full_name}!`
           });
-          
-          // Force reload to ensure AuthContext picks up the session
-          window.location.href = '/admin';
+          navigate('/admin');
         } else {
           toast({
             title: 'Access Denied',
@@ -66,12 +46,18 @@ const AdminLogin = () => {
             variant: 'destructive'
           });
         }
+      } else {
+        toast({
+          title: 'Login Failed',
+          description: result.error || 'Invalid admin credentials',
+          variant: 'destructive'
+        });
       }
     } catch (error) {
       console.error('Admin login error:', error);
       toast({
         title: 'Login Failed',
-        description: error.response?.data?.detail || 'Invalid admin credentials',
+        description: error?.message || 'Invalid admin credentials',
         variant: 'destructive'
       });
     } finally {

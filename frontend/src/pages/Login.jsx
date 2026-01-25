@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import axios from 'axios';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -9,11 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { toast } from '../hooks/use-toast';
 import { useAuth } from '../context/AuthContext';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL + '/api';
-
 const Login = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -40,26 +37,13 @@ const Login = () => {
       });
       
       // Small delay to let AuthContext update
-      setTimeout(async () => {
-        try {
-          // Check if user is admin
-          const userResponse = await axios.get(`${API_URL}/auth/me`, {
-            withCredentials: true,
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('session_token')}`
-            }
-          });
-          
-          if (userResponse.data.success && userResponse.data.user.role === 'admin') {
-            navigate('/admin');
-          } else {
-            navigate('/dashboard');
-          }
-        } catch (error) {
-          console.error('Error checking user role:', error);
+      setTimeout(() => {
+        if (result.user?.role === 'admin') {
+          navigate('/admin');
+        } else {
           navigate('/dashboard');
         }
-      }, 500);
+      }, 200);
     } else {
       toast({
         title: 'Login Failed',
@@ -71,10 +55,27 @@ const Login = () => {
     setIsLoading(false);
   };
 
-  const handleGoogleLogin = () => {
-    // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-    const redirectUrl = window.location.origin + '/dashboard';
-    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    const result = await loginWithGoogle();
+    if (result.success) {
+      toast({
+        title: 'Login Successful',
+        description: 'Welcome back to Monacap Trading Pro!'
+      });
+      if (result.user?.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
+    } else {
+      toast({
+        title: 'Login Failed',
+        description: result.error || 'Google authentication failed',
+        variant: 'destructive'
+      });
+    }
+    setIsLoading(false);
   };
 
   return (
