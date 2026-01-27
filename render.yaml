@@ -4,6 +4,7 @@ services:
     rootDir: frontend
     buildCommand: npm install --legacy-peer-deps && npm run build
     startCommand: npm start
+    plan: free
     envVars:
       - key: REACT_APP_FIREBASE_API_KEY
         value: ${REACT_APP_FIREBASE_API_KEY}
@@ -19,3 +20,33 @@ services:
         value: ${REACT_APP_FIREBASE_APP_ID}
       - key: REACT_APP_BACKEND_URL
         value: ${REACT_APP_BACKEND_URL}
+
+  - type: web
+    name: monacap-backend
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        value: ${FIREBASE_SERVICE_ACCOUNT_JSON}
+      - key: JWT_SECRET
+        value: ${JWT_SECRET}
+      - key: APP_URL
+        value: ${APP_URL}
+      - key: CORS_ORIGINS
+        value: ${CORS_ORIGINS}
+      - key: SMTP_HOST
+        value: ${SMTP_HOST}
+      - key: SMTP_PORT
+        value: ${SMTP_PORT}
+      - key: SMTP_USERNAME
+        value: ${SMTP_USERNAME}
+      - key: SMTP_PASSWORD
+        value: ${SMTP_PASSWORD}
+      - key: SMTP_FROM_EMAIL
+        value: ${SMTP_FROM_EMAIL}
+      - key: SMTP_FROM_NAME
+        value: ${SMTP_FROM_NAME}
