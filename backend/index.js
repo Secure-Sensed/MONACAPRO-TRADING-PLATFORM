@@ -1016,6 +1016,27 @@ app.get(
   );
 
 app.get(
+    "/api/health",
+    asyncHandler(async (_req, res) => {
+      try {
+        await db.collection("_health").limit(1).get();
+        res.status(200).json({
+          status: "healthy",
+          service: "monacaptradingpro-backend",
+          database: "connected",
+        });
+      } catch (error) {
+        res.status(500).json({
+          status: "unhealthy",
+          service: "monacaptradingpro-backend",
+          database: "disconnected",
+          error: error.message || String(error),
+        });
+      }
+    })
+  );
+
+app.get(
     "/health",
     asyncHandler(async (_req, res) => {
       try {
