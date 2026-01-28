@@ -3,7 +3,7 @@ services:
     name: monacap-frontend
     rootDir: frontend
     buildCommand: npm install --legacy-peer-deps && npm run build
-    startCommand: npm start
+    startCommand: npx serve -s build -l 3000
     plan: free
     envVars:
       - key: REACT_APP_FIREBASE_API_KEY
