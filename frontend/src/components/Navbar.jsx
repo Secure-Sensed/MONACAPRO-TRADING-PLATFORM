@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/button';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import LanguageSelector from './LanguageSelector';
 
@@ -10,6 +10,7 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, user, logout } = useAuth();
 
   useEffect(() => {
@@ -66,6 +67,20 @@ const Navbar = () => {
               copy trading
             </motion.span>
           </Link>
+
+          {/* Back Button */}
+          {location.pathname !== '/' && (
+            <motion.button
+              onClick={() => navigate(-1)}
+              className="hidden md:flex items-center space-x-1 text-gray-400 hover:text-cyan-400 transition-colors"
+              whileHover={{ x: -4 }}
+              whileTap={{ scale: 0.95 }}
+              title="Go back"
+            >
+              <ArrowLeft size={20} />
+              <span className="text-sm">Back</span>
+            </motion.button>
+          )}
 
           {/* Desktop Navigation */}
           <motion.div 

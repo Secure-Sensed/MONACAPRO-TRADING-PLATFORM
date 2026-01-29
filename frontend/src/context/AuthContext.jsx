@@ -138,6 +138,24 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       return { success: true, user: mapped };
     } catch (error) {
+      if (error?.message?.includes('postMessage')) {
+        try {
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (sessionData?.session?.user) {
+            const profile = await fetchProfile(sessionData.session.user.id);
+            const mapped = buildUser(profile, sessionData.session.user);
+            setUser(mapped);
+            setIsAuthenticated(true);
+            return { success: true, user: mapped };
+          }
+        } catch (sessionError) {
+          console.warn('Session recovery failed:', sessionError?.message || sessionError);
+        }
+        return {
+          success: false,
+          error: 'Registration completed but the session update failed. Please refresh and log in again.'
+        };
+      }
       return {
         success: false,
         error: error?.message || 'Registration failed'
@@ -170,6 +188,24 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       return { success: true, user: mapped };
     } catch (error) {
+      if (error?.message?.includes('postMessage')) {
+        try {
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (sessionData?.session?.user) {
+            const profile = await fetchProfile(sessionData.session.user.id);
+            const mapped = buildUser(profile, sessionData.session.user);
+            setUser(mapped);
+            setIsAuthenticated(true);
+            return { success: true, user: mapped };
+          }
+        } catch (sessionError) {
+          console.warn('Session recovery failed:', sessionError?.message || sessionError);
+        }
+        return {
+          success: false,
+          error: 'Login completed but the session update failed. Please refresh and try again.'
+        };
+      }
       return {
         success: false,
         error: error?.message || 'Login failed'

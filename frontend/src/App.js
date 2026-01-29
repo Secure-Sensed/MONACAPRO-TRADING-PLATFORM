@@ -19,6 +19,7 @@ import Partnership from "./pages/Partnership";
 import Contact from "./pages/Contact";
 import Software from "./pages/Software";
 import Insight from "./pages/Insight";
+import NotFound from "./pages/NotFound";
 import { Toaster } from "./components/ui/toaster";
 
 function AppRouter() {
@@ -53,6 +54,7 @@ function AppRouter() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/software" element={<Software />} />
         <Route path="/insight" element={<Insight />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />
       <ChatWidget />
