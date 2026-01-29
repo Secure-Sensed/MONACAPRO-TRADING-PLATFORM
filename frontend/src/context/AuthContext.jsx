@@ -123,13 +123,14 @@ export const AuthProvider = ({ children }) => {
         return { success: true, needsEmailConfirmation: true };
       }
 
-      try {
-        await supabase.functions.invoke('send-auth-email', {
+      // Send signup email asynchronously (don't block registration on this)
+      setTimeout(() => {
+        supabase.functions.invoke('send-auth-email', {
           body: { type: 'signup' }
+        }).catch(error => {
+          console.warn('Signup email failed:', error?.message || error);
         });
-      } catch (error) {
-        console.warn('Signup email failed:', error?.message || error);
-      }
+      }, 0);
 
       const profile = await fetchProfile(data.user.id);
       const mapped = buildUser(profile, data.user);
@@ -154,13 +155,14 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: error.message || 'Login failed' };
       }
 
-      try {
-        await supabase.functions.invoke('send-auth-email', {
+      // Send login email asynchronously (don't block login on this)
+      setTimeout(() => {
+        supabase.functions.invoke('send-auth-email', {
           body: { type: 'login' }
+        }).catch(error => {
+          console.warn('Login email failed:', error?.message || error);
         });
-      } catch (error) {
-        console.warn('Login email failed:', error?.message || error);
-      }
+      }, 0);
 
       const profile = await fetchProfile(data.user.id);
       const mapped = buildUser(profile, data.user);
