@@ -3,6 +3,10 @@
 # Monacap Trading Pro - Environment Variables
 # ========================================
 
+> Note: This guide references the legacy backend. The project now uses Supabase.
+> Use `REACT_APP_SUPABASE_URL` and `REACT_APP_SUPABASE_ANON_KEY` instead of `REACT_APP_BACKEND_URL`.
+> See `supabase/README.md` for the current setup.
+
 # ==========================================
 # SCENARIO 1: Frontend Hosted Externally + Backend on Emergent
 # ==========================================

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../utils/apiClient';
+import { supabase } from '../lib/supabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -18,8 +18,27 @@ import { useAuth } from '../context/AuthContext';
 import { toast } from '../hooks/use-toast';
 import CopyTraderDialog from '../components/CopyTraderDialog';
 import RealTimeTradingChart from '../components/RealTimeTradingChart';
-import { storage } from '../firebase';
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+
+const DEFAULT_WALLETS = {
+  bitcoin: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+  ethereum: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb8',
+  usdt_trc20: 'TXYZopYRdj2D9XRtbG4uTdwZjX9c2V4h9q',
+  usdt_erc20: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb8',
+  bank_transfer: {
+    bank_name: 'Chase Bank',
+    account_name: 'Monacap Trading Pro LLC',
+    account_number: '1234567890',
+    routing_number: '021000021',
+    swift_code: 'CHASUS33'
+  },
+  paypal: 'payments@monacaptradingpro.com'
+};
+
+const parseNumber = (value, fallback = 0) => {
+  if (value === null || value === undefined) return fallback;
+  const num = Number(value);
+  return Number.isFinite(num) ? num : fallback;
+};
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -45,7 +64,6 @@ const Dashboard = () => {
     country: '',
     picture: ''
   });
-  const [profileFile, setProfileFile] = useState(null);
   const [depositForm, setDepositForm] = useState({
     amount: '',
     method: 'bitcoin'
@@ -68,19 +86,6 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    fetchDashboardData();
-    fetchLeadTraders();
-    fetchCryptoPrices();
-    fetchTransactions();
-    fetchWallets();
-    
-    // Auto-refresh crypto prices every 30 seconds
-    const priceInterval = setInterval(fetchCryptoPrices, 30000);
-    
-    return () => clearInterval(priceInterval);
-  }, []);
-
-  useEffect(() => {
     if (user) {
       setProfileForm({
         full_name: user.full_name || '',
@@ -91,40 +96,87 @@ const Dashboard = () => {
     }
   }, [user]);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
+    if (!user?.user_id) return;
     try {
-      const response = await api.get('/dashboard/stats');
-      
-      if (response.data.success) {
-        const data = response.data.portfolio || {};
-        setPortfolio({
-          balance: data.balance ?? 0,
-          profit: data.profit ?? 0,
-          profitPercentage: data.profitPercentage ?? data.profit_percentage ?? 0,
-          activeCopies: data.activeCopies ?? data.active_copies ?? 0,
-          totalTrades: data.totalTrades ?? data.total_trades ?? 0
-        });
+      const refreshed = await refreshUser();
+      const balance = parseNumber(refreshed?.balance ?? user?.balance, 0);
+
+      const { data: activeCopies, error: copiesError } = await supabase
+        .from('copy_trades')
+        .select('current_profit')
+        .eq('user_id', user.user_id)
+        .eq('status', 'active');
+
+      if (copiesError) {
+        console.error('Error fetching copy trades:', copiesError.message || copiesError);
       }
+
+      const totalProfit = (activeCopies || []).reduce(
+        (sum, row) => sum + parseNumber(row.current_profit),
+        0
+      );
+
+      const { count: totalTrades, error: tradesError } = await supabase
+        .from('transactions')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.user_id)
+        .eq('type', 'trade');
+
+      if (tradesError) {
+        console.error('Error fetching trade count:', tradesError.message || tradesError);
+      }
+
+      const activeCopiesCount = activeCopies?.length ?? 0;
+      const profitPercentage = balance > 0 ? (totalProfit / balance) * 100 : 0;
+
+      setPortfolio({
+        balance,
+        profit: totalProfit,
+        profitPercentage: Math.round(profitPercentage * 100) / 100,
+        activeCopies: activeCopiesCount,
+        totalTrades: totalTrades || 0
+      });
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.user_id, user?.balance, refreshUser]);
 
-  const fetchLeadTraders = async () => {
+  const fetchLeadTraders = useCallback(async () => {
     try {
-      const response = await api.get('/traders');
-      
-      if (response.data.success) {
-        setLeadTraders(response.data.traders);
+      const { data, error } = await supabase
+        .from('traders')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching traders:', error.message || error);
+        return;
       }
+
+      const mapped = (data || []).map((row) => ({
+        trader_id: row.id,
+        name: row.name,
+        image: row.image,
+        profit: row.profit,
+        risk: row.risk,
+        win_rate: row.win_rate,
+        followers: row.followers,
+        trades: row.trades,
+        is_active: row.is_active,
+        created_at: row.created_at
+      }));
+
+      setLeadTraders(mapped);
     } catch (error) {
       console.error('Error fetching traders:', error);
     }
-  };
+  }, []);
 
-  const fetchCryptoPrices = async () => {
+  const fetchCryptoPrices = useCallback(async () => {
     try {
       // Fetch real-time crypto prices from CoinGecko
       const response = await fetch(
@@ -171,29 +223,72 @@ const Dashboard = () => {
       console.error('Error fetching crypto prices:', error);
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
+    if (!user?.user_id) return;
     try {
-      const response = await api.get('/transactions/me');
-      if (response.data.success) {
-        setTransactions(response.data.transactions || []);
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', user.user_id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching transactions:', error.message || error);
+        return;
       }
+
+      const mapped = (data || []).map((row) => ({
+        transaction_id: row.id,
+        user_id: row.user_id,
+        type: row.type,
+        amount: parseNumber(row.amount),
+        method: row.method,
+        asset: row.asset,
+        details: row.details,
+        status: row.status,
+        processed_by: row.processed_by,
+        processed_at: row.processed_at,
+        date: row.created_at,
+        created_at: row.created_at
+      }));
+
+      setTransactions(mapped);
     } catch (error) {
       console.error('Error fetching transactions:', error);
     }
-  };
+  }, [user?.user_id]);
 
-  const fetchWallets = async () => {
+  const fetchWallets = useCallback(async () => {
     try {
-      const response = await api.get('/wallets');
-      if (response.data.success) {
-        setWallets(response.data.wallets || {});
+      const { data, error } = await supabase.from('wallet_addresses').select('method, address');
+      if (error) {
+        console.error('Error fetching wallets:', error.message || error);
       }
+      const walletMap = { ...DEFAULT_WALLETS };
+      (data || []).forEach((row) => {
+        walletMap[row.method] = row.address;
+      });
+      setWallets(walletMap);
     } catch (error) {
       console.error('Error fetching wallets:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchCryptoPrices();
+    const priceInterval = setInterval(fetchCryptoPrices, 30000);
+    return () => clearInterval(priceInterval);
+  }, [fetchCryptoPrices]);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchDashboardData();
+    fetchLeadTraders();
+    fetchTransactions();
+    fetchWallets();
+  }, [user, fetchDashboardData, fetchLeadTraders, fetchTransactions, fetchWallets]);
 
   const handleDeposit = async (e) => {
     e.preventDefault();
@@ -216,24 +311,28 @@ const Dashboard = () => {
     }
     setActionLoading(true);
     try {
-      const response = await api.post('/transactions', {
+      const { error } = await supabase.from('transactions').insert({
+        user_id: user.user_id,
         type: 'deposit',
-        amount: depositForm.amount,
+        amount,
         method: depositForm.method
       });
-      if (response.data.success) {
-        toast({
-          title: 'Deposit submitted',
-          description: 'Your deposit request is pending approval.'
-        });
-        setDepositForm({ amount: '', method: depositForm.method });
-        await fetchTransactions();
-        await fetchDashboardData();
+
+      if (error) {
+        throw error;
       }
+
+      toast({
+        title: 'Deposit submitted',
+        description: 'Your deposit request is pending approval.'
+      });
+      setDepositForm({ amount: '', method: depositForm.method });
+      await fetchTransactions();
+      await fetchDashboardData();
     } catch (error) {
       toast({
         title: 'Deposit failed',
-        description: error?.response?.data?.detail || 'Unable to submit deposit',
+        description: error?.message || 'Unable to submit deposit',
         variant: 'destructive'
       });
     } finally {
@@ -278,27 +377,31 @@ const Dashboard = () => {
     }
     setActionLoading(true);
     try {
-      const response = await api.post('/transactions', {
+      const { error } = await supabase.from('transactions').insert({
+        user_id: user.user_id,
         type: 'withdrawal',
-        amount: withdrawForm.amount,
+        amount,
         method: withdrawForm.method,
         details: {
           address: withdrawForm.address
         }
       });
-      if (response.data.success) {
-        toast({
-          title: 'Withdrawal submitted',
-          description: 'Your withdrawal request is pending approval.'
-        });
-        setWithdrawForm({ amount: '', method: withdrawForm.method, address: '' });
-        await fetchTransactions();
-        await fetchDashboardData();
+
+      if (error) {
+        throw error;
       }
+
+      toast({
+        title: 'Withdrawal submitted',
+        description: 'Your withdrawal request is pending approval.'
+      });
+      setWithdrawForm({ amount: '', method: withdrawForm.method, address: '' });
+      await fetchTransactions();
+      await fetchDashboardData();
     } catch (error) {
       toast({
         title: 'Withdrawal failed',
-        description: error?.response?.data?.detail || 'Unable to submit withdrawal',
+        description: error?.message || 'Unable to submit withdrawal',
         variant: 'destructive'
       });
     } finally {
@@ -310,33 +413,52 @@ const Dashboard = () => {
     e.preventDefault();
     setActionLoading(true);
     try {
-      let payload = { ...profileForm };
-      if (profileFile) {
-        const filePath = `profile-images/${user?.user_id || user?.uid}/${Date.now()}_${profileFile.name}`;
-        const fileRef = storageRef(storage, filePath);
-        await uploadBytes(fileRef, profileFile);
-        const downloadUrl = await getDownloadURL(fileRef);
-        payload = { ...payload, picture: downloadUrl };
+      const payload = { ...profileForm };
+      const { error } = await supabase.from('profiles').update(payload).eq('id', user.user_id);
+      if (error) {
+        throw error;
       }
-
-      const response = await api.put('/profile', payload);
-      if (response.data.success) {
-        toast({
-          title: 'Profile updated',
-          description: 'Your profile changes have been saved.'
-        });
-        setProfileFile(null);
-        await refreshUser();
-      }
+      toast({
+        title: 'Profile updated',
+        description: 'Your profile changes have been saved.'
+      });
+      await refreshUser();
     } catch (error) {
       toast({
         title: 'Profile update failed',
-        description: error?.response?.data?.detail || 'Unable to update profile',
+        description: error?.message || 'Unable to update profile',
         variant: 'destructive'
       });
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const handleStartCopy = async (amount) => {
+    if (!selectedTrader?.trader_id) {
+      return { success: false, error: 'Select a trader to copy.' };
+    }
+    if (!user?.user_id) {
+      return { success: false, error: 'Please log in to start copying.' };
+    }
+    if (amount > portfolio.balance) {
+      return { success: false, error: 'Insufficient balance.' };
+    }
+
+    const { error } = await supabase.from('copy_trades').insert({
+      user_id: user.user_id,
+      trader_id: selectedTrader.trader_id,
+      amount,
+      status: 'active',
+      current_profit: 0
+    });
+
+    if (error) {
+      return { success: false, error: error.message || 'Unable to start copy trade.' };
+    }
+
+    await fetchDashboardData();
+    return { success: true };
   };
 
   const handleLogout = async () => {
@@ -844,18 +966,6 @@ const Dashboard = () => {
                         className="bg-[#0a1628] border-gray-600 text-white"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-gray-300">Upload Profile Image</Label>
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => setProfileFile(e.target.files?.[0] || null)}
-                        className="bg-[#0a1628] border-gray-600 text-white"
-                      />
-                      {profileFile && (
-                        <p className="text-xs text-gray-400">Selected: {profileFile.name}</p>
-                      )}
-                    </div>
                     <Button
                       type="submit"
                       disabled={actionLoading}
@@ -876,6 +986,7 @@ const Dashboard = () => {
           isOpen={showCopyDialog}
           onClose={() => setShowCopyDialog(false)}
           userBalance={portfolio.balance}
+          onStartCopy={handleStartCopy}
         />
       </div>
     </div>

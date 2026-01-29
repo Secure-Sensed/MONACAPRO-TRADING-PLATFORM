@@ -14,17 +14,11 @@ const DEFAULT_WALLETS = {
 };
 
 const getWalletOverrides = async (db) => {
-  const snapshot = await db.collection("wallet_addresses").get();
+  const result = await db.query("SELECT method, address FROM wallet_addresses");
   const overrides = {};
-
-  snapshot.forEach((doc) => {
-    const entry = doc.data() || {};
-    const method = entry.method || doc.id;
-    if (method) {
-      overrides[method] = entry.address;
-    }
+  result.rows.forEach((row) => {
+    overrides[row.method] = row.address;
   });
-
   return overrides;
 };
 

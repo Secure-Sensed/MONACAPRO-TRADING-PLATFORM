@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../utils/apiClient';
+import { supabase } from '../lib/supabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -27,6 +27,12 @@ import {
 import { toast } from '../hooks/use-toast';
 import { useAuth } from '../context/AuthContext';
 
+const parseNumber = (value, fallback = 0) => {
+  if (value === null || value === undefined) return fallback;
+  const num = Number(value);
+  return Number.isFinite(num) ? num : fallback;
+};
+
 const Admin = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -46,15 +52,173 @@ const Admin = () => {
     status: 'all'
   });
 
-  useEffect(() => {
-    if (!user || user.role !== 'admin') {
-      navigate('/admin/login');
-      return;
-    }
-    fetchAllData();
-  }, [user, navigate]);
+  const fetchUsers = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-  const fetchAllData = async () => {
+      if (error) {
+        console.error('Error fetching users:', error.message || error);
+        return;
+      }
+
+      const mapped = (data || []).map((row) => ({
+        user_id: row.id,
+        email: row.email,
+        full_name: row.full_name,
+        role: row.role,
+        status: row.status,
+        balance: parseNumber(row.balance),
+        phone: row.phone,
+        country: row.country,
+        picture: row.picture,
+        created_at: row.created_at,
+        updated_at: row.updated_at
+      }));
+
+      setUsers(mapped);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  }, []);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const [totalUsersRes, activeUsersRes, revenueRes, pendingWithdrawalsRes] = await Promise.all([
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'user'),
+        supabase
+          .from('profiles')
+          .select('id', { count: 'exact', head: true })
+          .eq('role', 'user')
+          .eq('status', 'active'),
+        supabase
+          .from('transactions')
+          .select('amount')
+          .eq('type', 'deposit')
+          .eq('status', 'completed'),
+        supabase
+          .from('transactions')
+          .select('id', { count: 'exact', head: true })
+          .eq('type', 'withdrawal')
+          .eq('status', 'pending')
+      ]);
+
+      if (totalUsersRes.error || activeUsersRes.error || revenueRes.error || pendingWithdrawalsRes.error) {
+        console.error('Error fetching stats:', {
+          totalUsers: totalUsersRes.error,
+          activeUsers: activeUsersRes.error,
+          revenue: revenueRes.error,
+          pendingWithdrawals: pendingWithdrawalsRes.error
+        });
+        return;
+      }
+
+      const totalRevenue = (revenueRes.data || []).reduce(
+        (sum, row) => sum + parseNumber(row.amount),
+        0
+      );
+
+      setStats({
+        totalUsers: totalUsersRes.count || 0,
+        activeUsers: activeUsersRes.count || 0,
+        totalRevenue,
+        pendingWithdrawals: pendingWithdrawalsRes.count || 0
+      });
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  }, []);
+
+  const fetchTraders = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('traders')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) {
+        console.error('Error fetching traders:', error.message || error);
+        return;
+      }
+      const mapped = (data || []).map((row) => ({
+        trader_id: row.id,
+        name: row.name,
+        image: row.image,
+        profit: row.profit,
+        risk: row.risk,
+        win_rate: row.win_rate,
+        followers: row.followers,
+        trades: row.trades,
+        is_active: row.is_active,
+        created_at: row.created_at
+      }));
+      setTraders(mapped);
+    } catch (error) {
+      console.error('Error fetching traders:', error);
+    }
+  }, []);
+
+  const fetchPlans = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('plans')
+        .select('*')
+        .order('price', { ascending: true });
+      if (error) {
+        console.error('Error fetching plans:', error.message || error);
+        return;
+      }
+      const mapped = (data || []).map((row) => ({
+        plan_id: row.id,
+        name: row.name,
+        price: parseNumber(row.price),
+        duration: row.duration,
+        features: row.features || [],
+        popular: row.popular
+      }));
+      setPlans(mapped);
+    } catch (error) {
+      console.error('Error fetching plans:', error);
+    }
+  }, []);
+
+  const fetchTransactions = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*, profile:profiles(full_name, email)')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching transactions:', error.message || error);
+        return;
+      }
+
+      const mapped = (data || []).map((row) => ({
+        transaction_id: row.id,
+        user_id: row.user_id,
+        user_name: row.profile?.full_name,
+        user_email: row.profile?.email,
+        type: row.type,
+        amount: parseNumber(row.amount),
+        method: row.method,
+        asset: row.asset,
+        details: row.details,
+        status: row.status,
+        processed_by: row.processed_by,
+        processed_at: row.processed_at,
+        date: row.created_at,
+        created_at: row.created_at
+      }));
+
+      setTransactions(mapped);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+    }
+  }, []);
+
+  const fetchAllData = useCallback(async () => {
     try {
       await Promise.all([
         fetchUsers(),
@@ -68,68 +232,24 @@ const Admin = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchUsers, fetchStats, fetchTraders, fetchPlans, fetchTransactions]);
 
-  const fetchUsers = async () => {
-    try {
-      const response = await api.get('/users');
-      if (response.data.success) {
-        setUsers(response.data.users);
-      }
-    } catch (error) {
-      console.error('Error fetching users:', error);
+  useEffect(() => {
+    if (!user || user.role !== 'admin') {
+      navigate('/admin/login');
+      return;
     }
-  };
-
-  const fetchStats = async () => {
-    try {
-      const response = await api.get('/admin/stats');
-      if (response.data.success) {
-        setStats(response.data.stats);
-      }
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-    }
-  };
-
-  const fetchTraders = async () => {
-    try {
-      const response = await api.get('/traders');
-      if (response.data.success) {
-        setTraders(response.data.traders);
-      }
-    } catch (error) {
-      console.error('Error fetching traders:', error);
-    }
-  };
-
-  const fetchPlans = async () => {
-    try {
-      const response = await api.get('/plans');
-      if (response.data.success) {
-        setPlans(response.data.plans);
-      }
-    } catch (error) {
-      console.error('Error fetching plans:', error);
-    }
-  };
-
-  const fetchTransactions = async () => {
-    try {
-      const response = await api.get('/transactions');
-      if (response.data.success) {
-        setTransactions(response.data.transactions);
-      }
-    } catch (error) {
-      console.error('Error fetching transactions:', error);
-    }
-  };
+    fetchAllData();
+  }, [user, navigate, fetchAllData]);
 
   const handleDeleteUser = async (userId) => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
     
     try {
-      await api.delete(`/users/${userId}`);
+      const { error } = await supabase.rpc('admin_delete_user', { target_id: userId });
+      if (error) {
+        throw error;
+      }
       toast({
         title: 'User Deleted',
         description: 'User has been removed from the system'
@@ -138,7 +258,7 @@ const Admin = () => {
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to delete user',
+        description: error?.message || 'Failed to delete user',
         variant: 'destructive'
       });
     }
@@ -148,7 +268,10 @@ const Admin = () => {
     const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
     
     try {
-      await api.put(`/users/${userId}`, { status: newStatus });
+      const { error } = await supabase.from('profiles').update({ status: newStatus }).eq('id', userId);
+      if (error) {
+        throw error;
+      }
       toast({
         title: 'Status Updated',
         description: 'User status has been changed'
@@ -157,7 +280,7 @@ const Admin = () => {
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to update user status',
+        description: error?.message || 'Failed to update user status',
         variant: 'destructive'
       });
     }
@@ -165,7 +288,10 @@ const Admin = () => {
 
   const handleApproveTransaction = async (transactionId) => {
     try {
-      await api.put(`/transactions/${transactionId}/approve`, {});
+      const { error } = await supabase.rpc('approve_transaction', { transaction_id: transactionId });
+      if (error) {
+        throw error;
+      }
       toast({
         title: 'Transaction Approved',
         description: 'Transaction has been processed successfully'
@@ -174,7 +300,7 @@ const Admin = () => {
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to approve transaction',
+        description: error?.message || 'Failed to approve transaction',
         variant: 'destructive'
       });
     }
@@ -184,7 +310,10 @@ const Admin = () => {
     if (!window.confirm('Are you sure you want to reject this transaction?')) return;
     
     try {
-      await api.put(`/transactions/${transactionId}/reject`, {});
+      const { error } = await supabase.rpc('reject_transaction', { transaction_id: transactionId });
+      if (error) {
+        throw error;
+      }
       toast({
         title: 'Transaction Rejected',
         description: 'Transaction has been cancelled'
@@ -193,7 +322,7 @@ const Admin = () => {
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to reject transaction',
+        description: error?.message || 'Failed to reject transaction',
         variant: 'destructive'
       });
     }

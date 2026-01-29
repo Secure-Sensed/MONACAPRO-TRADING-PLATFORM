@@ -5,26 +5,25 @@ import { Button } from '../components/ui/button';
 import { TrendingUp, TrendingDown, DollarSign, BarChart3, Search } from 'lucide-react';
 import { Input } from '../components/ui/input';
 
+const stockData = [
+  { symbol: 'AAPL', name: 'Apple Inc.', price: 178.52, change: 2.45, changePercent: 1.39, volume: '52.4M', marketCap: '2.8T' },
+  { symbol: 'MSFT', name: 'Microsoft Corporation', price: 384.79, change: -1.23, changePercent: -0.32, volume: '24.1M', marketCap: '2.9T' },
+  { symbol: 'GOOGL', name: 'Alphabet Inc.', price: 141.80, change: 3.67, changePercent: 2.66, volume: '28.7M', marketCap: '1.8T' },
+  { symbol: 'AMZN', name: 'Amazon.com Inc.', price: 155.33, change: 4.21, changePercent: 2.79, volume: '43.2M', marketCap: '1.6T' },
+  { symbol: 'TSLA', name: 'Tesla Inc.', price: 242.84, change: -5.67, changePercent: -2.28, volume: '112.3M', marketCap: '771B' },
+  { symbol: 'META', name: 'Meta Platforms Inc.', price: 478.42, change: 12.34, changePercent: 2.65, volume: '15.8M', marketCap: '1.2T' },
+  { symbol: 'NVDA', name: 'NVIDIA Corporation', price: 505.48, change: 8.92, changePercent: 1.80, volume: '38.5M', marketCap: '1.2T' },
+  { symbol: 'JPM', name: 'JPMorgan Chase & Co.', price: 167.89, change: -0.45, changePercent: -0.27, volume: '9.2M', marketCap: '485B' },
+  { symbol: 'V', name: 'Visa Inc.', price: 279.34, change: 3.12, changePercent: 1.13, volume: '6.8M', marketCap: '583B' },
+  { symbol: 'WMT', name: 'Walmart Inc.', price: 165.23, change: 1.89, changePercent: 1.16, volume: '7.3M', marketCap: '442B' },
+  { symbol: 'DIS', name: 'The Walt Disney Company', price: 112.45, change: -2.34, changePercent: -2.04, volume: '11.2M', marketCap: '205B' },
+  { symbol: 'NFLX', name: 'Netflix Inc.', price: 487.93, change: 6.78, changePercent: 1.41, volume: '4.5M', marketCap: '210B' },
+];
+
 const Stocks = () => {
   const [stocks, setStocks] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-
-  // Mock stock data
-  const stockData = [
-    { symbol: 'AAPL', name: 'Apple Inc.', price: 178.52, change: 2.45, changePercent: 1.39, volume: '52.4M', marketCap: '2.8T' },
-    { symbol: 'MSFT', name: 'Microsoft Corporation', price: 384.79, change: -1.23, changePercent: -0.32, volume: '24.1M', marketCap: '2.9T' },
-    { symbol: 'GOOGL', name: 'Alphabet Inc.', price: 141.80, change: 3.67, changePercent: 2.66, volume: '28.7M', marketCap: '1.8T' },
-    { symbol: 'AMZN', name: 'Amazon.com Inc.', price: 155.33, change: 4.21, changePercent: 2.79, volume: '43.2M', marketCap: '1.6T' },
-    { symbol: 'TSLA', name: 'Tesla Inc.', price: 242.84, change: -5.67, changePercent: -2.28, volume: '112.3M', marketCap: '771B' },
-    { symbol: 'META', name: 'Meta Platforms Inc.', price: 478.42, change: 12.34, changePercent: 2.65, volume: '15.8M', marketCap: '1.2T' },
-    { symbol: 'NVDA', name: 'NVIDIA Corporation', price: 505.48, change: 8.92, changePercent: 1.80, volume: '38.5M', marketCap: '1.2T' },
-    { symbol: 'JPM', name: 'JPMorgan Chase & Co.', price: 167.89, change: -0.45, changePercent: -0.27, volume: '9.2M', marketCap: '485B' },
-    { symbol: 'V', name: 'Visa Inc.', price: 279.34, change: 3.12, changePercent: 1.13, volume: '6.8M', marketCap: '583B' },
-    { symbol: 'WMT', name: 'Walmart Inc.', price: 165.23, change: 1.89, changePercent: 1.16, volume: '7.3M', marketCap: '442B' },
-    { symbol: 'DIS', name: 'The Walt Disney Company', price: 112.45, change: -2.34, changePercent: -2.04, volume: '11.2M', marketCap: '205B' },
-    { symbol: 'NFLX', name: 'Netflix Inc.', price: 487.93, change: 6.78, changePercent: 1.41, volume: '4.5M', marketCap: '210B' },
-  ];
 
   useEffect(() => {
     // Simulate loading

@@ -1,4 +1,5 @@
 services:
+  # Legacy backend service (not required when using Supabase)
   - type: web
     name: monacap-frontend
     rootDir: frontend
@@ -6,20 +7,10 @@ services:
     startCommand: npx serve -s build -l 3000
     plan: free
     envVars:
-      - key: REACT_APP_FIREBASE_API_KEY
-        value: ${REACT_APP_FIREBASE_API_KEY}
-      - key: REACT_APP_FIREBASE_AUTH_DOMAIN
-        value: ${REACT_APP_FIREBASE_AUTH_DOMAIN}
-      - key: REACT_APP_FIREBASE_PROJECT_ID
-        value: ${REACT_APP_FIREBASE_PROJECT_ID}
-      - key: REACT_APP_FIREBASE_STORAGE_BUCKET
-        value: ${REACT_APP_FIREBASE_STORAGE_BUCKET}
-      - key: REACT_APP_FIREBASE_MESSAGING_SENDER_ID
-        value: ${REACT_APP_FIREBASE_MESSAGING_SENDER_ID}
-      - key: REACT_APP_FIREBASE_APP_ID
-        value: ${REACT_APP_FIREBASE_APP_ID}
-      - key: REACT_APP_BACKEND_URL
-        value: ${REACT_APP_BACKEND_URL}
+      - key: REACT_APP_SUPABASE_URL
+        value: ${REACT_APP_SUPABASE_URL}
+      - key: REACT_APP_SUPABASE_ANON_KEY
+        value: ${REACT_APP_SUPABASE_ANON_KEY}
 
   - type: web
     name: monacap-backend
@@ -30,14 +21,24 @@ services:
     envVars:
       - key: PORT
         value: 10000
-      - key: FIREBASE_SERVICE_ACCOUNT_JSON
-        value: ${FIREBASE_SERVICE_ACCOUNT_JSON}
+      - key: DATABASE_URL
+        value: ${DATABASE_URL}
       - key: JWT_SECRET
         value: ${JWT_SECRET}
+      - key: JWT_EXPIRES_IN
+        value: ${JWT_EXPIRES_IN}
       - key: APP_URL
         value: ${APP_URL}
       - key: CORS_ORIGINS
         value: ${CORS_ORIGINS}
+      - key: MIN_DEPOSIT
+        value: ${MIN_DEPOSIT}
+      - key: MIN_WITHDRAWAL
+        value: ${MIN_WITHDRAWAL}
+      - key: MAX_WITHDRAWAL
+        value: ${MAX_WITHDRAWAL}
+      - key: MAX_DEPOSIT
+        value: ${MAX_DEPOSIT}
       - key: SMTP_HOST
         value: ${SMTP_HOST}
       - key: SMTP_PORT

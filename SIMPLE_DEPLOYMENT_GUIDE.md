@@ -3,6 +3,10 @@
 # Simple Deployment Guide
 # ========================================
 
+> Note: This guide references the legacy backend. The project now uses Supabase.
+> Use `REACT_APP_SUPABASE_URL` and `REACT_APP_SUPABASE_ANON_KEY` instead of `REACT_APP_BACKEND_URL`.
+> See `supabase/README.md` for the current setup.
+
 ## 🎯 Setup Overview
 - ✅ Frontend: Host on Vercel/Netlify/Your Server
 - ✅ Backend: Stays on Emergent (No changes needed!)

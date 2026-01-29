@@ -1,111 +1,141 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import axios from 'axios';
-import {
-  createUserWithEmailAndPassword,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  signOut,
-  updateProfile
-} from 'firebase/auth';
-import { auth, googleProvider } from '../firebase';
+import { supabase } from '../lib/supabaseClient';
 
 const AuthContext = createContext();
 
-const API_URL = process.env.REACT_APP_BACKEND_URL + '/api';
+const parseNumber = (value, fallback = 0) => {
+  if (value === null || value === undefined) return fallback;
+  const num = Number(value);
+  return Number.isFinite(num) ? num : fallback;
+};
+
+const buildUser = (profile, authUser) => {
+  if (!profile && !authUser) return null;
+  return {
+    user_id: profile?.id || authUser?.id || null,
+    email: profile?.email || authUser?.email || '',
+    full_name: profile?.full_name || authUser?.user_metadata?.full_name || '',
+    role: profile?.role || 'user',
+    status: profile?.status || 'active',
+    balance: parseNumber(profile?.balance, 0),
+    phone: profile?.phone || '',
+    country: profile?.country || '',
+    picture: profile?.picture || '',
+    created_at: profile?.created_at,
+    updated_at: profile?.updated_at
+  };
+};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  const fetchProfile = async (userId) => {
+    if (!userId) return null;
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    if (error) {
+      console.warn('Failed to fetch profile:', error.message || error);
+      return null;
+    }
+    return data;
+  };
+
   const refreshUser = async () => {
-    const token = localStorage.getItem('session_token');
-    if (!token) {
+    const { data, error } = await supabase.auth.getSession();
+    if (error || !data?.session?.user) {
       setUser(null);
       setIsAuthenticated(false);
       return null;
     }
 
-    try {
-      const response = await axios.get(`${API_URL}/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      if (response.data.success) {
-        setUser(response.data.user);
-        setIsAuthenticated(true);
-        return response.data.user;
-      }
-    } catch (error) {
-      setUser(null);
-      setIsAuthenticated(false);
-    }
-    return null;
+    const profile = await fetchProfile(data.session.user.id);
+    const mapped = buildUser(profile, data.session.user);
+    setUser(mapped);
+    setIsAuthenticated(true);
+    return mapped;
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      try {
-        if (!firebaseUser) {
-          localStorage.removeItem('session_token');
-          setUser(null);
-          setIsAuthenticated(false);
-          return;
-        }
+    let isMounted = true;
 
-        const token = await firebaseUser.getIdToken();
-        localStorage.setItem('session_token', token);
-
-        const response = await axios.get(`${API_URL}/auth/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-
-        if (response.data.success) {
-          setUser(response.data.user);
-          setIsAuthenticated(true);
-        } else {
-          setUser(null);
-          setIsAuthenticated(false);
-        }
-      } catch (error) {
-        console.log('Not authenticated');
+    const init = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (!isMounted) return;
+      if (error || !data?.session?.user) {
         setUser(null);
         setIsAuthenticated(false);
-      } finally {
         setLoading(false);
+        return;
       }
+      const profile = await fetchProfile(data.session.user.id);
+      const mapped = buildUser(profile, data.session.user);
+      setUser(mapped);
+      setIsAuthenticated(true);
+      setLoading(false);
+    };
+
+    init();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!isMounted) return;
+      if (!session?.user) {
+        setUser(null);
+        setIsAuthenticated(false);
+        setLoading(false);
+        return;
+      }
+      const profile = await fetchProfile(session.user.id);
+      const mapped = buildUser(profile, session.user);
+      setUser(mapped);
+      setIsAuthenticated(true);
+      setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      isMounted = false;
+      authListener?.subscription?.unsubscribe();
+    };
   }, []);
 
   const register = async (fullName, email, password) => {
     try {
-      const credential = await createUserWithEmailAndPassword(auth, email, password);
-      if (fullName) {
-        await updateProfile(credential.user, { displayName: fullName });
-      }
-      const token = await credential.user.getIdToken();
-      localStorage.setItem('session_token', token);
-
-      const response = await axios.get(`${API_URL}/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: fullName }
         }
       });
-
-      if (response.data.success) {
-        setUser(response.data.user);
-        setIsAuthenticated(true);
-        return { success: true, user: response.data.user };
+      if (error) {
+        return { success: false, error: error.message || 'Registration failed' };
       }
 
-      return { success: false, error: 'Registration failed' };
+      if (data?.user?.id && fullName) {
+        await supabase.from('profiles').update({ full_name: fullName }).eq('id', data.user.id);
+      }
+
+      if (!data?.session) {
+        return { success: true, needsEmailConfirmation: true };
+      }
+
+      try {
+        await supabase.functions.invoke('send-auth-email', {
+          body: { type: 'signup' }
+        });
+      } catch (error) {
+        console.warn('Signup email failed:', error?.message || error);
+      }
+
+      const profile = await fetchProfile(data.user.id);
+      const mapped = buildUser(profile, data.user);
+      setUser(mapped);
+      setIsAuthenticated(true);
+      return { success: true, user: mapped };
     } catch (error) {
       return {
         success: false,
@@ -116,23 +146,27 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const credential = await signInWithEmailAndPassword(auth, email, password);
-      const token = await credential.user.getIdToken();
-      localStorage.setItem('session_token', token);
-
-      const response = await axios.get(`${API_URL}/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
       });
-
-      if (response.data.success) {
-        setUser(response.data.user);
-        setIsAuthenticated(true);
-        return { success: true, user: response.data.user };
+      if (error) {
+        return { success: false, error: error.message || 'Login failed' };
       }
 
-      return { success: false, error: 'Login failed' };
+      try {
+        await supabase.functions.invoke('send-auth-email', {
+          body: { type: 'login' }
+        });
+      } catch (error) {
+        console.warn('Login email failed:', error?.message || error);
+      }
+
+      const profile = await fetchProfile(data.user.id);
+      const mapped = buildUser(profile, data.user);
+      setUser(mapped);
+      setIsAuthenticated(true);
+      return { success: true, user: mapped };
     } catch (error) {
       return {
         success: false,
@@ -141,52 +175,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const loginWithGoogle = async () => {
-    try {
-      const credential = await signInWithPopup(auth, googleProvider);
-      const token = await credential.user.getIdToken();
-      localStorage.setItem('session_token', token);
-
-      const response = await axios.get(`${API_URL}/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      if (response.data.success) {
-        setUser(response.data.user);
-        setIsAuthenticated(true);
-        return { success: true, user: response.data.user };
-      }
-
-      return { success: false, error: 'Google authentication failed' };
-    } catch (error) {
-      return {
-        success: false,
-        error: error?.message || 'Google authentication failed'
-      };
-    }
-  };
-
   const logout = async () => {
-    const token = localStorage.getItem('session_token');
     try {
-      if (token) {
-        await axios.post(
-          `${API_URL}/auth/logout`,
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          }
-        );
-      }
+      await supabase.auth.signOut();
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      await signOut(auth);
-      localStorage.removeItem('session_token');
       setUser(null);
       setIsAuthenticated(false);
     }
@@ -199,7 +193,6 @@ export const AuthProvider = ({ children }) => {
     refreshUser,
     register,
     login,
-    loginWithGoogle,
     logout
   };
 

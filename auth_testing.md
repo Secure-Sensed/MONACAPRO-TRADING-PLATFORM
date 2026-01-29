@@ -1,56 +1,51 @@
-# Auth-Gated App Testing Playbook (Firebase Auth)
+# Auth-Gated App Testing Playbook (JWT + Postgres)
 
-## Step 1: Ensure Firebase is configured
+## Step 1: Ensure backend is configured
 Set these backend env vars before testing:
 ```
-FIREBASE_API_KEY=your_firebase_web_api_key
-FIREBASE_SERVICE_ACCOUNT_JSON='{"type":"service_account",...}'
-FIREBASE_STORAGE_BUCKET=your-project-id.appspot.com
+DATABASE_URL=postgres://USER:PASSWORD@HOST:PORT/DATABASE
+JWT_SECRET=change_me
 ```
 
-## Step 2: Register or Login (Firebase Auth)
+## Step 2: Register or Login
 ```bash
-# Register a user (returns Firebase ID token)
+# Register a user (returns JWT)
 curl -X POST "http://localhost:8001/api/auth/register" \
   -H "Content-Type: application/json" \
   -d '{"full_name":"Test User","email":"test.user@example.com","password":"testpassword123"}'
 
-# Login (returns Firebase ID token)
+# Login (returns JWT)
 curl -X POST "http://localhost:8001/api/auth/login" \
   -H "Content-Type: application/json" \
   -d '{"email":"test.user@example.com","password":"testpassword123"}'
 ```
 
-## Step 3: Test Backend API (Bearer ID Token)
+## Step 3: Test Backend API (Bearer JWT)
 ```bash
 # Test auth endpoint
 curl -X GET "http://localhost:8001/api/auth/me" \
-  -H "Authorization: Bearer YOUR_FIREBASE_ID_TOKEN"
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
 
 # Test traders endpoint
 curl -X GET "http://localhost:8001/api/traders"
 
 # Test dashboard stats
 curl -X GET "http://localhost:8001/api/dashboard/stats" \
-  -H "Authorization: Bearer YOUR_FIREBASE_ID_TOKEN"
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 ## Step 4: Browser Testing
-Login through the UI (Firebase Auth). The frontend stores the Firebase ID token in localStorage
+Login through the UI. The frontend stores the JWT in localStorage
 and attaches it to API requests automatically.
 
 ## Quick Debug
 ```bash
 # Check user data
-mongosh --eval "
-use('moncaplus');
-db.users.find().limit(2).pretty();
-"
+psql "$DATABASE_URL" -c "SELECT id, email, role, status, balance FROM users LIMIT 5;"
 ```
 
 ## Checklist
-- [ ] Firebase user exists for the email
-- [ ] Mongo user has firebase_uid populated
+- [ ] User exists in Postgres
 - [ ] API returns user data with user_id field
 - [ ] Browser loads dashboard (not login page)
 

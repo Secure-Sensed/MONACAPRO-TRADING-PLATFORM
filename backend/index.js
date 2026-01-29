@@ -1,31 +1,38 @@
 const path = require("path");
-const crypto = require("crypto");
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const axios = require("axios");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const { v4: uuidv4 } = require("uuid");
 
 const { authMiddleware, adminMiddleware } = require("./middleware/auth");
 const { sendWelcomeEmail } = require("./services/emailService");
 const { getAllWallets, getWalletByMethod } = require("./services/walletService");
-const { initFirebase } = require("./services/firebase");
-const { ensureAdminUser } = require("./services/adminSeed");
+const { initDb, query } = require("./services/db");
 
 require("dotenv").config({ path: path.join(__dirname, ".env") });
 
 const PORT = Number(process.env.PORT || "8001");
-const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY;
+const JWT_SECRET = process.env.JWT_SECRET || "change_this_secret";
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
 const MIN_DEPOSIT = Number(process.env.MIN_DEPOSIT || "250");
 const MIN_WITHDRAWAL = Number(process.env.MIN_WITHDRAWAL || "100");
 const MAX_WITHDRAWAL = Number(process.env.MAX_WITHDRAWAL || "100000");
 const MAX_DEPOSIT = Number(process.env.MAX_DEPOSIT || "1000000");
 
+
 const app = express();
-const admin = initFirebase();
+app.set("trust proxy", 1);
 
 const corsOrigins = process.env.CORS_ORIGINS || "*";
 const allowedOrigins =
-  corsOrigins === "*" ? "*" : corsOrigins.split(",").map((origin) => origin.trim()).filter(Boolean);
+  corsOrigins === "*"
+    ? "*"
+    : corsOrigins
+        .split(",")
+        .map((origin) => origin.trim())
+        .filter(Boolean);
 
 const corsOptions =
   allowedOrigins === "*"
@@ -40,328 +47,253 @@ const corsOptions =
       };
 
 app.use(cors(corsOptions));
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 const asyncHandler = (handler) => (req, res, next) =>
   Promise.resolve(handler(req, res, next)).catch(next);
 
-const normalizeValue = (value) => {
-  if (value && typeof value.toDate === "function") {
-    return value.toDate().toISOString();
-  }
-  return value;
+const parseNumber = (value, fallback = 0) => {
+  if (value === null || value === undefined) return fallback;
+  const num = Number(value);
+  return Number.isFinite(num) ? num : fallback;
 };
 
-const normalizeRecord = (record) => {
-  const normalized = {};
-  Object.entries(record || {}).forEach(([key, value]) => {
-    if (Array.isArray(value)) {
-      normalized[key] = value.map((item) => normalizeValue(item));
-    } else {
-      normalized[key] = normalizeValue(value);
-    }
-  });
-  return normalized;
-};
-
-const docToData = (doc, idField) => {
-  const data = doc.data() || {};
-  const withId = idField && !data[idField] ? { ...data, [idField]: doc.id } : data;
-  return normalizeRecord(withId);
-};
-
-const resolveUserRef = async (db, userId) => {
-  const directRef = db.collection("users").doc(userId);
-  const directSnap = await directRef.get();
-  if (directSnap.exists) {
-    return directRef;
-  }
-  const snapshot = await db.collection("users").where("user_id", "==", userId).limit(1).get();
-  if (!snapshot.empty) {
-    return snapshot.docs[0].ref;
-  }
-  return null;
-};
-
-const deleteByField = async (collectionRef, field, value) => {
-  let deleted = 0;
-  while (true) {
-    const snapshot = await collectionRef.where(field, "==", value).limit(500).get();
-    if (snapshot.empty) {
-      break;
-    }
-    const batch = collectionRef.firestore.batch();
-    snapshot.docs.forEach((doc) => batch.delete(doc.ref));
-    await batch.commit();
-    deleted += snapshot.size;
-    if (snapshot.size < 500) {
-      break;
-    }
-  }
-  return deleted;
-};
-
-const firebaseAuthRequest = async (endpoint, payload) => {
-  if (!FIREBASE_API_KEY) {
-    const error = new Error("FIREBASE_API_KEY is not set");
-    error.status = 500;
-    throw error;
-  }
-
-  const response = await axios.post(
-    `https://identitytoolkit.googleapis.com/v1/${endpoint}?key=${FIREBASE_API_KEY}`,
-    payload,
-    {
-      timeout: 10000,
-      validateStatus: () => true,
-    }
-  );
-
-  if (response.status !== 200) {
-    const message = response.data?.error?.message || "Firebase Auth request failed";
-    const error = new Error(message);
-    error.status = response.status;
-    throw error;
-  }
-
-  return response.data;
-};
-
-const upsertUserFromFirebase = async (db, firebaseUser) => {
-  const userRef = db.collection("users").doc(firebaseUser.uid);
-  const existingDoc = await userRef.get();
-
-  if (existingDoc.exists) {
-    const data = existingDoc.data() || {};
-    const merged = {
-      user_id: data.user_id || firebaseUser.uid,
-      firebase_uid: data.firebase_uid || firebaseUser.uid,
-      ...data,
-    };
-    if (!data.user_id || !data.firebase_uid) {
-      await userRef.set(
-        {
-          user_id: firebaseUser.uid,
-          firebase_uid: firebaseUser.uid,
-          updated_at: new Date(),
-        },
-        { merge: true }
-      );
-    }
-    return { uid: firebaseUser.uid, ...merged };
-  }
-
-  if (firebaseUser.email) {
-    const snapshot = await db.collection("users").where("email", "==", firebaseUser.email).limit(1).get();
-    if (!snapshot.empty) {
-      const existingData = snapshot.docs[0].data();
-      const merged = {
-        ...existingData,
-        firebase_uid: firebaseUser.uid,
-        user_id: existingData.user_id || firebaseUser.uid,
-        updated_at: new Date(),
-      };
-      await userRef.set(merged, { merge: true });
-      return { uid: firebaseUser.uid, ...merged };
-    }
-  }
-
-  const now = new Date();
-  const newUser = {
-    firebase_uid: firebaseUser.uid,
-    user_id: firebaseUser.uid,
-    email: firebaseUser.email,
-    full_name:
-      firebaseUser.displayName ||
-      firebaseUser.name ||
-      (firebaseUser.email ? firebaseUser.email.split("@")[0] : "Monacap User"),
-    picture: firebaseUser.photoURL || firebaseUser.picture || null,
-    role: "user",
-    balance: 0.0,
-    status: "active",
-    created_at: now,
+const mapUser = (row) => {
+  if (!row) return null;
+  return {
+    user_id: row.id,
+    email: row.email,
+    full_name: row.full_name,
+    role: row.role,
+    status: row.status,
+    balance: parseNumber(row.balance, 0),
+    phone: row.phone,
+    country: row.country,
+    picture: row.picture,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
   };
-
-  await userRef.set(newUser);
-  return { uid: firebaseUser.uid, ...newUser };
 };
 
-const db = admin.firestore();
-ensureAdminUser(admin, db).catch((error) => {
-  console.warn("Admin seed failed:", error.message || error);
+const mapTransaction = (row) => ({
+  transaction_id: row.id,
+  user_id: row.user_id,
+  type: row.type,
+  amount: parseNumber(row.amount),
+  method: row.method,
+  asset: row.asset,
+  details: row.details,
+  status: row.status,
+  processed_by: row.processed_by,
+  processed_at: row.processed_at,
+  date: row.created_at,
+  created_at: row.created_at,
 });
 
-const requireAuth = authMiddleware(db, admin);
-const requireAdmin = adminMiddleware(db, admin);
+const createToken = (user) =>
+  jwt.sign({ sub: user.id, role: user.role }, JWT_SECRET, {
+    expiresIn: JWT_EXPIRES_IN,
+  });
+
+initDb().catch((error) => {
+  console.error("Database init failed:", error);
+});
 
 app.get(
-    "/api/auth/me",
-    requireAuth,
-    asyncHandler(async (req, res) => {
-      res.status(200).json({ success: true, user: normalizeRecord(req.user) });
-    })
-  );
+  "/api/auth/me",
+  authMiddleware,
+  asyncHandler(async (req, res) => {
+    res.status(200).json({ success: true, user: mapUser(req.user) });
+  })
+);
 
 app.post(
-    "/api/auth/register",
-    asyncHandler(async (req, res) => {
-      const fullName = req.body.full_name || req.body.fullName;
-      const { email, password } = req.body;
+  "/api/auth/register",
+  asyncHandler(async (req, res) => {
+    const fullName = req.body.full_name || req.body.fullName;
+    const { email, password } = req.body;
 
-      if (!fullName || !email || !password) {
-        return res.status(400).json({ success: false, detail: "Missing required fields" });
-      }
+    if (!fullName || !email || !password) {
+      return res.status(400).json({ success: false, detail: "Missing required fields" });
+    }
 
-      const firebaseData = await firebaseAuthRequest("accounts:signUp", {
-        email,
-        password,
-        returnSecureToken: true,
-      });
+    const existing = await query("SELECT id FROM users WHERE email = $1", [email]);
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ success: false, detail: "Email already registered" });
+    }
 
-      await admin.auth().updateUser(firebaseData.localId, { displayName: fullName });
-      const firebaseUser = await admin.auth().getUser(firebaseData.localId);
-      const user = await upsertUserFromFirebase(db, firebaseUser);
+    const passwordHash = await bcrypt.hash(password, 10);
+    const userId = uuidv4();
 
-      sendWelcomeEmail({
-        userName: user.full_name,
-        userEmail: user.email,
-        userId: user.user_id,
-      }).catch((error) => {
-        console.warn("Welcome email failed:", error.message || error);
-      });
+    await query(
+      `INSERT INTO users (id, email, password_hash, full_name, role, status, balance)
+       VALUES ($1, $2, $3, $4, 'user', 'active', 0)`,
+      [userId, email, passwordHash, fullName]
+    );
 
-      res.status(200).json({
-        success: true,
-        message: "User registered successfully",
-        user: normalizeRecord(user),
-        token: firebaseData.idToken,
-      });
-    })
-  );
+    const userResult = await query("SELECT * FROM users WHERE id = $1", [userId]);
+    const user = userResult.rows[0];
 
-app.post(
-    "/api/auth/login",
-    asyncHandler(async (req, res) => {
-      const { email, password } = req.body;
-      if (!email || !password) {
-        return res.status(400).json({ success: false, detail: "Email and password required" });
-      }
+    sendWelcomeEmail({
+      userName: user.full_name,
+      userEmail: user.email,
+      userId: user.id,
+    }).catch((error) => {
+      console.warn("Welcome email failed:", error.message || error);
+    });
 
-      const firebaseData = await firebaseAuthRequest("accounts:signInWithPassword", {
-        email,
-        password,
-        returnSecureToken: true,
-      });
-
-      const firebaseUser = await admin.auth().getUser(firebaseData.localId);
-      const user = await upsertUserFromFirebase(db, firebaseUser);
-
-      res.status(200).json({
-        success: true,
-        message: "Login successful",
-        user: normalizeRecord(user),
-        token: firebaseData.idToken,
-      });
-    })
-  );
+    res.status(200).json({
+      success: true,
+      message: "User registered successfully",
+      user: mapUser(user),
+      token: createToken(user),
+    });
+  })
+);
 
 app.post(
-    "/api/auth/logout",
-    requireAuth,
-    asyncHandler(async (req, res) => {
-      const uid = req.firebaseToken.uid;
-      await admin.auth().revokeRefreshTokens(uid);
-      res.status(200).json({ success: true, message: "Logged out successfully" });
-    })
-  );
+  "/api/auth/login",
+  asyncHandler(async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ success: false, detail: "Email and password required" });
+    }
+
+    const userResult = await query("SELECT * FROM users WHERE email = $1", [email]);
+    if (userResult.rows.length === 0) {
+      return res.status(400).json({ success: false, detail: "Invalid credentials" });
+    }
+
+    const user = userResult.rows[0];
+    const passwordOk = await bcrypt.compare(password, user.password_hash);
+    if (!passwordOk) {
+      return res.status(400).json({ success: false, detail: "Invalid credentials" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      user: mapUser(user),
+      token: createToken(user),
+    });
+  })
+);
 
 app.post(
-    "/api/auth/change-password",
-    requireAuth,
-    asyncHandler(async (_req, res) => {
-      res.status(501).json({
-        success: false,
-        detail: "Use Firebase client SDK to change passwords.",
-      });
-    })
-  );
+  "/api/auth/logout",
+  asyncHandler(async (_req, res) => {
+    res.status(200).json({ success: true, message: "Logged out successfully" });
+  })
+);
+
+app.post(
+  "/api/auth/change-password",
+  authMiddleware,
+  asyncHandler(async (req, res) => {
+    const { current_password, new_password } = req.body;
+    if (!current_password || !new_password) {
+      return res.status(400).json({ success: false, detail: "Missing password fields" });
+    }
+
+    const passwordOk = await bcrypt.compare(current_password, req.user.password_hash);
+    if (!passwordOk) {
+      return res.status(400).json({ success: false, detail: "Current password incorrect" });
+    }
+
+    const hash = await bcrypt.hash(new_password, 10);
+    await query("UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2", [
+      hash,
+      req.user.id,
+    ]);
+
+    res.status(200).json({ success: true, message: "Password updated successfully" });
+  })
+);
 
 app.get(
-    "/api/users",
-    requireAdmin,
-    asyncHandler(async (_req, res) => {
-      const snapshot = await db.collection("users").get();
-      const users = snapshot.docs.map((doc) => {
-        const data = doc.data() || {};
-        const sanitized = {
-          ...data,
-          user_id: data.user_id || doc.id,
-        };
-        delete sanitized.password;
-        return normalizeRecord(sanitized);
-      });
-      res.status(200).json({ success: true, users });
-    })
-  );
+  "/api/users",
+  adminMiddleware,
+  asyncHandler(async (_req, res) => {
+    const result = await query("SELECT * FROM users");
+    const users = result.rows.map((row) => mapUser(row));
+    res.status(200).json({ success: true, users });
+  })
+);
 
 app.put(
-    "/api/users/:userId",
-    requireAdmin,
-    asyncHandler(async (req, res) => {
-      const { userId } = req.params;
-      const { status, balance, role } = req.body;
-      const updateData = {};
+  "/api/users/:userId",
+  adminMiddleware,
+  asyncHandler(async (req, res) => {
+    const { userId } = req.params;
+    const { status, balance, role } = req.body;
 
-      if (status !== undefined) updateData.status = status;
-      if (balance !== undefined) updateData.balance = balance;
-      if (role !== undefined) updateData.role = role;
+    const userResult = await query("SELECT * FROM users WHERE id = $1", [userId]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ success: false, detail: "User not found" });
+    }
 
-      if (Object.keys(updateData).length > 0) {
-        updateData.updated_at = new Date();
-        const userRef = await resolveUserRef(db, userId);
-        if (!userRef) {
-          return res.status(404).json({ success: false, detail: "User not found" });
-        }
-        await userRef.set(updateData, { merge: true });
-      }
+    await query(
+      `UPDATE users
+       SET status = COALESCE($1, status),
+           balance = COALESCE($2, balance),
+           role = COALESCE($3, role),
+           updated_at = NOW()
+       WHERE id = $4`,
+      [status ?? null, balance ?? null, role ?? null, userId]
+    );
 
-      res.status(200).json({ success: true, message: "User updated" });
-    })
-  );
+    res.status(200).json({ success: true, message: "User updated" });
+  })
+);
 
 app.delete(
-    "/api/users/:userId",
-    requireAdmin,
-    asyncHandler(async (req, res) => {
-      const { userId } = req.params;
-      const userRef = await resolveUserRef(db, userId);
-      if (!userRef) {
-        return res.status(404).json({ success: false, detail: "User not found" });
-      }
-      await userRef.delete();
-      await deleteByField(db.collection("copy_trades"), "user_id", userId);
-      await deleteByField(db.collection("transactions"), "user_id", userId);
-      res.status(200).json({ success: true, message: "User deleted" });
-    })
-  );
+  "/api/users/:userId",
+  adminMiddleware,
+  asyncHandler(async (req, res) => {
+    const { userId } = req.params;
+    await query("DELETE FROM users WHERE id = $1", [userId]);
+    res.status(200).json({ success: true, message: "User deleted" });
+  })
+);
 
 app.get(
-    "/api/traders",
-    asyncHandler(async (_req, res) => {
-      const snapshot = await db.collection("traders").where("is_active", "==", true).get();
-      const traders = snapshot.docs.map((doc) => docToData(doc, "trader_id"));
-      res.status(200).json({ success: true, traders });
-    })
-  );
+  "/api/traders",
+  asyncHandler(async (_req, res) => {
+    const result = await query("SELECT * FROM traders WHERE is_active = TRUE");
+    const traders = result.rows.map((row) => ({
+      trader_id: row.id,
+      name: row.name,
+      image: row.image,
+      profit: row.profit,
+      risk: row.risk,
+      win_rate: row.win_rate,
+      followers: row.followers,
+      trades: row.trades,
+      is_active: row.is_active,
+      created_at: row.created_at,
+    }));
+    res.status(200).json({ success: true, traders });
+  })
+);
 
 app.post(
-    "/api/traders",
-    requireAdmin,
-    asyncHandler(async (req, res) => {
-      const traderId = `trader_${crypto.randomBytes(6).toString("hex")}`;
-      const now = new Date();
-      const traderDoc = {
+  "/api/traders",
+  adminMiddleware,
+  asyncHandler(async (req, res) => {
+    const traderId = uuidv4();
+    const now = new Date();
+
+    await query(
+      `INSERT INTO traders (id, name, image, profit, risk, win_rate, followers, trades, is_active, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, 0, 0, TRUE, $7)`,
+      [traderId, req.body.name, req.body.image, req.body.profit, req.body.risk, req.body.win_rate, now]
+    );
+
+    res.status(200).json({
+      success: true,
+      trader: {
         trader_id: traderId,
         name: req.body.name,
         image: req.body.image,
@@ -372,333 +304,267 @@ app.post(
         trades: 0,
         is_active: true,
         created_at: now,
-      };
-
-      await db.collection("traders").doc(traderId).set(traderDoc);
-      const trader = normalizeRecord(traderDoc);
-
-      res.status(200).json({ success: true, trader });
-    })
-  );
+      },
+    });
+  })
+);
 
 app.post(
-    "/api/copy/start",
-    requireAuth,
-    asyncHandler(async (req, res) => {
-      const userId = req.user.user_id;
-      const { traderId, amount } = req.body;
+  "/api/copy/start",
+  authMiddleware,
+  asyncHandler(async (req, res) => {
+    const { traderId, amount } = req.body;
+    const numericAmount = Number(amount);
 
-      if (!traderId || !amount) {
-        return res.status(400).json({
-          success: false,
-          detail: "Trader ID and amount are required"
-        });
-      }
+    if (!traderId || !Number.isFinite(numericAmount) || numericAmount <= 0) {
+      return res.status(400).json({ success: false, detail: "Trader ID and valid amount required" });
+    }
 
-      const numericAmount = Number(amount);
-      if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-        return res.status(400).json({
-          success: false,
-          detail: "Amount must be greater than 0"
-        });
-      }
+    const traderResult = await query("SELECT id FROM traders WHERE id = $1 AND is_active = TRUE", [traderId]);
+    if (traderResult.rows.length === 0) {
+      return res.status(404).json({ success: false, detail: "Trader not found" });
+    }
 
-      // Check trader exists
-      const traderSnap = await db.collection("traders").doc(traderId).get();
-      if (!traderSnap.exists) {
-        return res.status(404).json({
-          success: false,
-          detail: "Trader not found"
-        });
-      }
+    if (numericAmount > parseNumber(req.user.balance)) {
+      return res.status(400).json({ success: false, detail: "Insufficient balance" });
+    }
 
-      // Check user balance
-      const userRef = await resolveUserRef(db, userId);
-      const userSnap = await userRef?.get();
-      const balance = userSnap?.data()?.balance || 0;
+    const copyTradeId = uuidv4();
+    const now = new Date();
+    await query(
+      `INSERT INTO copy_trades (id, user_id, trader_id, amount, current_profit, status, started_at, created_at)
+       VALUES ($1, $2, $3, $4, 0, 'active', $5, $5)`,
+      [copyTradeId, req.user.id, traderId, numericAmount, now]
+    );
 
-      if (numericAmount > balance) {
-        return res.status(400).json({
-          success: false,
-          detail: "Insufficient balance"
-        });
-      }
-
-      const copyTradeId = `copy_${crypto.randomBytes(8).toString("hex")}`;
-      const now = new Date();
-      const copyTradeDoc = {
+    res.status(201).json({
+      success: true,
+      message: "Copy trade started successfully",
+      copyTrade: {
         copy_trade_id: copyTradeId,
-        user_id: userId,
+        user_id: req.user.id,
         trader_id: traderId,
         amount: numericAmount,
-        started_at: now,
         current_profit: 0,
         status: "active",
-        created_at: now
-      };
-
-      await db.collection("copy_trades").doc(copyTradeId).set(copyTradeDoc);
-
-      res.status(201).json({
-        success: true,
-        message: "Copy trade started successfully",
-        copyTrade: normalizeRecord(copyTradeDoc)
-      });
-    })
-  );
+        started_at: now,
+        created_at: now,
+      },
+    });
+  })
+);
 
 app.get(
-    "/api/copy/active",
-    requireAuth,
-    asyncHandler(async (req, res) => {
-      const userId = req.user.user_id;
+  "/api/copy/active",
+  authMiddleware,
+  asyncHandler(async (req, res) => {
+    const result = await query(
+      `SELECT c.*, t.name, t.image, t.profit, t.risk, t.win_rate
+       FROM copy_trades c
+       LEFT JOIN traders t ON t.id = c.trader_id
+       WHERE c.user_id = $1 AND c.status = 'active'`,
+      [req.user.id]
+    );
 
-      const snapshot = await db
-        .collection("copy_trades")
-        .where("user_id", "==", userId)
-        .where("status", "==", "active")
-        .get();
+    const activeCopies = result.rows.map((row) => ({
+      copy_trade_id: row.id,
+      user_id: row.user_id,
+      trader_id: row.trader_id,
+      amount: parseNumber(row.amount),
+      current_profit: parseNumber(row.current_profit),
+      status: row.status,
+      started_at: row.started_at,
+      created_at: row.created_at,
+      trader: row.trader_id
+        ? {
+            trader_id: row.trader_id,
+            name: row.name,
+            image: row.image,
+            profit: row.profit,
+            risk: row.risk,
+            win_rate: row.win_rate,
+          }
+        : null,
+    }));
 
-      const copyTrades = snapshot.docs.map((doc) => docToData(doc, "copy_trade_id"));
-
-      // Fetch trader details for each copy trade
-      const copyTradesWithTraders = await Promise.all(
-        copyTrades.map(async (copyTrade) => {
-          const traderSnap = await db
-            .collection("traders")
-            .doc(copyTrade.trader_id)
-            .get();
-          const trader = traderSnap.exists
-            ? normalizeRecord(docToData(traderSnap, "trader_id"))
-            : null;
-          return {
-            ...copyTrade,
-            trader
-          };
-        })
-      );
-
-      res.status(200).json({
-        success: true,
-        activeCopies: copyTradesWithTraders
-      });
-    })
-  );
+    res.status(200).json({ success: true, activeCopies });
+  })
+);
 
 app.delete(
-    "/api/copy/:copyTradeId",
-    requireAuth,
-    asyncHandler(async (req, res) => {
-      const { copyTradeId } = req.params;
-      const userId = req.user.user_id;
+  "/api/copy/:copyTradeId",
+  authMiddleware,
+  asyncHandler(async (req, res) => {
+    const { copyTradeId } = req.params;
+    const result = await query("SELECT * FROM copy_trades WHERE id = $1", [copyTradeId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, detail: "Copy trade not found" });
+    }
+    const copyTrade = result.rows[0];
+    if (copyTrade.user_id !== req.user.id) {
+      return res.status(403).json({ success: false, detail: "You can only stop your own copy trades" });
+    }
 
-      const snapshot = await db
-        .collection("copy_trades")
-        .where("copy_trade_id", "==", copyTradeId)
-        .limit(1)
-        .get();
-
-      if (snapshot.empty) {
-        return res.status(404).json({
-          success: false,
-          detail: "Copy trade not found"
-        });
-      }
-
-      const copyTradeDoc = snapshot.docs[0];
-      const copyTradeData = copyTradeDoc.data();
-
-      // Verify ownership
-      if (copyTradeData.user_id !== userId) {
-        return res.status(403).json({
-          success: false,
-          detail: "You can only stop your own copy trades"
-        });
-      }
-
-      // Update status to stopped instead of deleting
-      await copyTradeDoc.ref.set(
-        {
-          status: "stopped",
-          ended_at: new Date(),
-          updated_at: new Date()
-        },
-        { merge: true }
-      );
-
-      res.status(200).json({
-        success: true,
-        message: "Copy trade stopped successfully"
-      });
-    })
-  );
+    await query(
+      "UPDATE copy_trades SET status = 'stopped', ended_at = NOW() WHERE id = $1",
+      [copyTradeId]
+    );
+    res.status(200).json({ success: true, message: "Copy trade stopped successfully" });
+  })
+);
 
 app.get(
-    "/api/dashboard/stats",
-    requireAuth,
-    asyncHandler(async (req, res) => {
-      const userId = req.user.user_id;
+  "/api/dashboard/stats",
+  authMiddleware,
+  asyncHandler(async (req, res) => {
+    const activeCopiesResult = await query(
+      "SELECT COUNT(*)::int AS count, COALESCE(SUM(current_profit),0) AS profit FROM copy_trades WHERE user_id = $1 AND status = 'active'",
+      [req.user.id]
+    );
+    const tradesResult = await query(
+      "SELECT COUNT(*)::int AS count FROM transactions WHERE user_id = $1 AND type = 'trade'",
+      [req.user.id]
+    );
+    const activeCopies = activeCopiesResult.rows[0];
+    const totalProfit = parseNumber(activeCopies.profit);
+    const balance = parseNumber(req.user.balance);
+    const profitPercentage = balance > 0 ? (totalProfit / balance) * 100 : 0;
 
-      const activeCopiesSnapshot = await db
-        .collection("copy_trades")
-        .where("user_id", "==", userId)
-        .where("status", "==", "active")
-        .get();
-
-      const totalTradesSnapshot = await db
-        .collection("transactions")
-        .where("user_id", "==", userId)
-        .where("type", "==", "trade")
-        .get();
-
-      const copyTrades = activeCopiesSnapshot.docs.map((doc) => doc.data() || {});
-
-      const totalProfit = copyTrades.reduce(
-        (sum, trade) => sum + (trade.current_profit || 0),
-        0
-      );
-      const profitPercentage =
-        req.user.balance > 0 ? (totalProfit / req.user.balance) * 100 : 0;
-
-      res.status(200).json({
-        success: true,
-        portfolio: {
-          balance: req.user.balance,
-          profit: totalProfit,
-          profit_percentage: Math.round(profitPercentage * 100) / 100,
-          active_copies: activeCopiesSnapshot.size,
-          total_trades: totalTradesSnapshot.size,
-          profitPercentage: Math.round(profitPercentage * 100) / 100,
-          activeCopies: activeCopiesSnapshot.size,
-          totalTrades: totalTradesSnapshot.size,
-        },
-      });
-    })
-  );
+    res.status(200).json({
+      success: true,
+      portfolio: {
+        balance,
+        profit: totalProfit,
+        profit_percentage: Math.round(profitPercentage * 100) / 100,
+        active_copies: activeCopies.count,
+        total_trades: tradesResult.rows[0]?.count || 0,
+        profitPercentage: Math.round(profitPercentage * 100) / 100,
+        activeCopies: activeCopies.count,
+        totalTrades: tradesResult.rows[0]?.count || 0,
+      },
+    });
+  })
+);
 
 app.get(
-    "/api/plans",
-    asyncHandler(async (_req, res) => {
-      const snapshot = await db.collection("plans").where("is_active", "==", true).get();
-      const plans = snapshot.docs.map((doc) => docToData(doc, "plan_id"));
-      res.status(200).json({ success: true, plans });
-    })
-  );
+  "/api/plans",
+  asyncHandler(async (_req, res) => {
+    const result = await query("SELECT * FROM plans WHERE is_active = TRUE ORDER BY price ASC");
+    const plans = result.rows.map((row) => ({
+      plan_id: row.id,
+      name: row.name,
+      price: parseNumber(row.price),
+      duration: row.duration,
+      features: row.features || [],
+      popular: row.popular,
+    }));
+    res.status(200).json({ success: true, plans });
+  })
+);
 
 app.get(
-    "/api/wallets",
-    asyncHandler(async (_req, res) => {
-      const wallets = await getAllWallets(db);
-      res.status(200).json({ success: true, wallets });
-    })
-  );
+  "/api/wallets",
+  asyncHandler(async (_req, res) => {
+    const wallets = await getAllWallets({ query });
+    res.status(200).json({ success: true, wallets });
+  })
+);
 
 app.get(
-    "/api/wallets/:method",
-    asyncHandler(async (req, res) => {
-      const method = req.params.method.toLowerCase();
-      const wallet = await getWalletByMethod(db, method);
-      if (!wallet) {
-        return res.status(404).json({ success: false, detail: "Payment method not found" });
-      }
-      res.status(200).json({ success: true, method, wallet });
-    })
-  );
+  "/api/wallets/:method",
+  asyncHandler(async (req, res) => {
+    const method = req.params.method.toLowerCase();
+    const wallet = await getWalletByMethod({ query }, method);
+    if (!wallet) {
+      return res.status(404).json({ success: false, detail: "Payment method not found" });
+    }
+    res.status(200).json({ success: true, method, wallet });
+  })
+);
 
 app.get(
-    "/api/transactions/me",
-    requireAuth,
-    asyncHandler(async (req, res) => {
-      const userId = req.user.user_id;
-      const snapshot = await db
-        .collection("transactions")
-        .where("user_id", "==", userId)
-        .get();
-      const transactions = snapshot.docs
-        .map((doc) => docToData(doc, "transaction_id"))
-        .sort((a, b) => {
-          const dateA = new Date(a.date || a.created_at || 0).getTime();
-          const dateB = new Date(b.date || b.created_at || 0).getTime();
-          return dateB - dateA;
-        });
-      res.status(200).json({ success: true, transactions });
-    })
-  );
+  "/api/transactions/me",
+  authMiddleware,
+  asyncHandler(async (req, res) => {
+    const result = await query("SELECT * FROM transactions WHERE user_id = $1 ORDER BY created_at DESC", [
+      req.user.id,
+    ]);
+    const transactions = result.rows.map((row) => mapTransaction(row));
+    res.status(200).json({ success: true, transactions });
+  })
+);
 
 app.post(
-    "/api/transactions",
-    requireAuth,
-    asyncHandler(async (req, res) => {
-      const userId = req.user.user_id;
-      const { type, amount, method, asset, details } = req.body;
+  "/api/transactions",
+  authMiddleware,
+  asyncHandler(async (req, res) => {
+    const { type, amount, method, asset, details } = req.body;
 
-      if (!type || !amount) {
-        return res.status(400).json({ success: false, detail: "Type and amount are required" });
+    if (!type || !amount) {
+      return res.status(400).json({ success: false, detail: "Type and amount are required" });
+    }
+
+    if (!["deposit", "withdrawal", "trade"].includes(type)) {
+      return res.status(400).json({ success: false, detail: "Invalid transaction type" });
+    }
+
+    const numericAmount = Number(amount);
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+      return res.status(400).json({ success: false, detail: "Amount must be greater than 0" });
+    }
+
+    if ((type === "deposit" || type === "withdrawal") && !method) {
+      return res.status(400).json({ success: false, detail: "Payment method is required" });
+    }
+
+    if (type === "deposit" && numericAmount < MIN_DEPOSIT) {
+      return res.status(400).json({ success: false, detail: `Minimum deposit is ${MIN_DEPOSIT}` });
+    }
+
+    if (type === "deposit" && numericAmount > MAX_DEPOSIT) {
+      return res.status(400).json({ success: false, detail: `Maximum deposit is ${MAX_DEPOSIT}` });
+    }
+
+    if (type === "withdrawal" && numericAmount < MIN_WITHDRAWAL) {
+      return res.status(400).json({ success: false, detail: `Minimum withdrawal is ${MIN_WITHDRAWAL}` });
+    }
+
+    if (type === "withdrawal" && numericAmount > MAX_WITHDRAWAL) {
+      return res.status(400).json({ success: false, detail: `Maximum withdrawal is ${MAX_WITHDRAWAL}` });
+    }
+
+    if (type === "withdrawal") {
+      if (!details || !details.address) {
+        return res.status(400).json({ success: false, detail: "Withdrawal address is required" });
       }
-
-      if (!["deposit", "withdrawal", "trade"].includes(type)) {
-        return res.status(400).json({ success: false, detail: "Invalid transaction type" });
+      if (numericAmount > parseNumber(req.user.balance)) {
+        return res.status(400).json({ success: false, detail: "Insufficient balance" });
       }
+    }
 
-      const numericAmount = Number(amount);
-      if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-        return res.status(400).json({ success: false, detail: "Amount must be greater than 0" });
-      }
+    const transactionId = uuidv4();
+    const now = new Date();
+    await query(
+      `INSERT INTO transactions (id, user_id, type, amount, method, asset, details, status, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, 'pending', $8)`,
+      [
+        transactionId,
+        req.user.id,
+        type,
+        numericAmount,
+        method || null,
+        asset || null,
+        details ? JSON.stringify(details) : null,
+        now,
+      ]
+    );
 
-      if ((type === "deposit" || type === "withdrawal") && !method) {
-        return res.status(400).json({ success: false, detail: "Payment method is required" });
-      }
-
-      if (type === "deposit" && numericAmount < MIN_DEPOSIT) {
-        return res.status(400).json({
-          success: false,
-          detail: `Minimum deposit is ${MIN_DEPOSIT}`,
-        });
-      }
-
-      if (type === "deposit" && numericAmount > MAX_DEPOSIT) {
-        return res.status(400).json({
-          success: false,
-          detail: `Maximum deposit is ${MAX_DEPOSIT}`,
-        });
-      }
-
-      if (type === "withdrawal" && numericAmount < MIN_WITHDRAWAL) {
-        return res.status(400).json({
-          success: false,
-          detail: `Minimum withdrawal is ${MIN_WITHDRAWAL}`,
-        });
-      }
-
-      if (type === "withdrawal" && numericAmount > MAX_WITHDRAWAL) {
-        return res.status(400).json({
-          success: false,
-          detail: `Maximum withdrawal is ${MAX_WITHDRAWAL}`,
-        });
-      }
-
-      if (type === "withdrawal") {
-        if (!details || !details.address) {
-          return res.status(400).json({
-            success: false,
-            detail: "Withdrawal address is required",
-          });
-        }
-        const userRef = await resolveUserRef(db, userId);
-        const userSnap = await userRef?.get();
-        const balance = userSnap?.data()?.balance ?? req.user.balance ?? 0;
-        if (numericAmount > balance) {
-          return res.status(400).json({ success: false, detail: "Insufficient balance" });
-        }
-      }
-
-      const transactionId = `txn_${crypto.randomBytes(8).toString("hex")}`;
-      const now = new Date();
-      const transactionDoc = {
+    res.status(201).json({
+      success: true,
+      message: "Transaction submitted",
+      transaction: {
         transaction_id: transactionId,
-        user_id: userId,
-        user_email: req.user.email || null,
-        user_name: req.user.full_name || null,
+        user_id: req.user.id,
         type,
         amount: numericAmount,
         method: method || null,
@@ -707,355 +573,285 @@ app.post(
         status: "pending",
         date: now,
         created_at: now,
-      };
-
-      await db.collection("transactions").doc(transactionId).set(transactionDoc);
-
-      res.status(201).json({
-        success: true,
-        message: "Transaction submitted",
-        transaction: normalizeRecord(transactionDoc),
-      });
-    })
-  );
+      },
+    });
+  })
+);
 
 app.put(
-    "/api/profile",
-    requireAuth,
-    asyncHandler(async (req, res) => {
-      const userId = req.user.user_id;
-      const { full_name, phone, country, picture } = req.body || {};
+  "/api/profile",
+  authMiddleware,
+  asyncHandler(async (req, res) => {
+    const { full_name, phone, country, picture } = req.body || {};
 
-      if (!full_name && !phone && !country && !picture) {
-        return res.status(400).json({ success: false, detail: "No profile updates provided" });
-      }
+    if (!full_name && !phone && !country && !picture) {
+      return res.status(400).json({ success: false, detail: "No profile updates provided" });
+    }
 
-      const userRef = await resolveUserRef(db, userId);
-      if (!userRef) {
-        return res.status(404).json({ success: false, detail: "User not found" });
-      }
+    await query(
+      `UPDATE users
+       SET full_name = COALESCE($1, full_name),
+           phone = COALESCE($2, phone),
+           country = COALESCE($3, country),
+           picture = COALESCE($4, picture),
+           updated_at = NOW()
+       WHERE id = $5`,
+      [full_name ?? null, phone ?? null, country ?? null, picture ?? null, req.user.id]
+    );
 
-      const updateData = { updated_at: new Date() };
-      if (full_name) updateData.full_name = full_name;
-      if (phone) updateData.phone = phone;
-      if (country) updateData.country = country;
-      if (picture) updateData.picture = picture;
+    const updated = await query("SELECT * FROM users WHERE id = $1", [req.user.id]);
 
-      await userRef.set(updateData, { merge: true });
+    res.status(200).json({
+      success: true,
+      message: "Profile updated",
+      user: mapUser(updated.rows[0]),
+    });
+  })
+);
 
-      if (full_name) {
-        await admin.auth().updateUser(userId, { displayName: full_name });
-      }
-
-      const updatedSnap = await userRef.get();
-      const updatedUser = updatedSnap.exists ? updatedSnap.data() : null;
-
-      res.status(200).json({
-        success: true,
-        message: "Profile updated",
-        user: normalizeRecord(updatedUser),
-      });
-    })
-  );
 
 app.put(
-    "/api/wallets/:method",
-    requireAdmin,
-    asyncHandler(async (req, res) => {
-      const method = req.params.method.toLowerCase();
-      const { address } = req.body;
+  "/api/wallets/:method",
+  adminMiddleware,
+  asyncHandler(async (req, res) => {
+    const method = req.params.method.toLowerCase();
+    const { address } = req.body;
 
-      if (!address) {
-        return res.status(400).json({ success: false, detail: "Address required" });
-      }
+    if (!address) {
+      return res.status(400).json({ success: false, detail: "Address required" });
+    }
 
-      await db
-        .collection("wallet_addresses")
-        .doc(method)
-        .set({ method, address, updated_at: new Date() }, { merge: true });
+    await query(
+      `INSERT INTO wallet_addresses (method, address, updated_at)
+       VALUES ($1, $2::jsonb, NOW())
+       ON CONFLICT (method) DO UPDATE SET address = $2::jsonb, updated_at = NOW()`,
+      [method, JSON.stringify(address)]
+    );
 
-      res.status(200).json({ success: true, message: "Wallet address updated" });
-    })
-  );
+    res.status(200).json({ success: true, message: "Wallet address updated" });
+  })
+);
 
 app.post(
-    "/api/admin/users/:userId/suspend",
-    requireAdmin,
-    asyncHandler(async (req, res) => {
-      const { userId } = req.params;
-      const userRef = await resolveUserRef(db, userId);
-      if (!userRef) {
-        return res.status(404).json({ success: false, detail: "User not found" });
-      }
-      await userRef.set({ status: "inactive", updated_at: new Date() }, { merge: true });
-      res.status(200).json({ success: true, message: "User account suspended" });
-    })
-  );
+  "/api/admin/users/:userId/suspend",
+  adminMiddleware,
+  asyncHandler(async (req, res) => {
+    const { userId } = req.params;
+    await query("UPDATE users SET status = 'inactive', updated_at = NOW() WHERE id = $1", [userId]);
+    res.status(200).json({ success: true, message: "User account suspended" });
+  })
+);
 
 app.post(
-    "/api/admin/users/:userId/activate",
-    requireAdmin,
-    asyncHandler(async (req, res) => {
-      const { userId } = req.params;
-      const userRef = await resolveUserRef(db, userId);
-      if (!userRef) {
-        return res.status(404).json({ success: false, detail: "User not found" });
-      }
-      await userRef.set({ status: "active", updated_at: new Date() }, { merge: true });
-      res.status(200).json({ success: true, message: "User account activated" });
-    })
-  );
+  "/api/admin/users/:userId/activate",
+  adminMiddleware,
+  asyncHandler(async (req, res) => {
+    const { userId } = req.params;
+    await query("UPDATE users SET status = 'active', updated_at = NOW() WHERE id = $1", [userId]);
+    res.status(200).json({ success: true, message: "User account activated" });
+  })
+);
 
 app.get(
-    "/api/admin/users/:userId/balance",
-    requireAdmin,
-    asyncHandler(async (req, res) => {
-      const { userId } = req.params;
-      const userRef = await resolveUserRef(db, userId);
-      if (!userRef) {
-        return res.status(404).json({ success: false, detail: "User not found" });
-      }
-      const userSnap = await userRef.get();
-      const user = userSnap.exists ? userSnap.data() : null;
+  "/api/admin/users/:userId/balance",
+  adminMiddleware,
+  asyncHandler(async (req, res) => {
+    const { userId } = req.params;
+    const result = await query("SELECT id, email, full_name, balance FROM users WHERE id = $1", [userId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, detail: "User not found" });
+    }
+    const user = result.rows[0];
+    res.status(200).json({
+      success: true,
+      user_id: user.id,
+      balance: parseNumber(user.balance),
+      email: user.email,
+      full_name: user.full_name,
+    });
+  })
+);
 
-      if (!user) {
-        return res.status(404).json({ success: false, detail: "User not found" });
-      }
+app.put(
+  "/api/admin/users/:userId/balance",
+  adminMiddleware,
+  asyncHandler(async (req, res) => {
+    const { userId } = req.params;
+    const { balance } = req.body;
 
+    if (balance === undefined) {
+      return res.status(400).json({ success: false, detail: "Balance amount required" });
+    }
+
+    await query("UPDATE users SET balance = $1, updated_at = NOW() WHERE id = $2", [
+      balance,
+      userId,
+    ]);
+    res.status(200).json({ success: true, message: "Balance updated successfully" });
+  })
+);
+
+app.get(
+  "/api/transactions",
+  adminMiddleware,
+  asyncHandler(async (_req, res) => {
+    const result = await query("SELECT * FROM transactions ORDER BY created_at DESC");
+    const transactions = result.rows.map((row) => mapTransaction(row));
+    res.status(200).json({ success: true, transactions });
+  })
+);
+
+app.put(
+  "/api/transactions/:transactionId/approve",
+  adminMiddleware,
+  asyncHandler(async (req, res) => {
+    const { transactionId } = req.params;
+    const txResult = await query("SELECT * FROM transactions WHERE id = $1", [transactionId]);
+    if (txResult.rows.length === 0) {
+      return res.status(404).json({ success: false, detail: "Transaction not found" });
+    }
+
+    const tx = txResult.rows[0];
+    if (tx.status !== "pending") {
+      return res.status(400).json({ success: false, detail: "Transaction already processed" });
+    }
+
+    const amount = parseNumber(tx.amount);
+    const userResult = await query("SELECT * FROM users WHERE id = $1", [tx.user_id]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ success: false, detail: "User not found" });
+    }
+    const user = userResult.rows[0];
+    let newBalance = parseNumber(user.balance);
+
+    if (tx.type === "deposit") {
+      newBalance += amount;
+    } else if (tx.type === "withdrawal") {
+      newBalance -= amount;
+      if (newBalance < 0) {
+        return res.status(400).json({ success: false, detail: "Insufficient balance" });
+      }
+    }
+
+    await query("UPDATE users SET balance = $1, updated_at = NOW() WHERE id = $2", [
+      newBalance,
+      user.id,
+    ]);
+
+    await query(
+      "UPDATE transactions SET status = 'completed', processed_by = $1, processed_at = NOW() WHERE id = $2",
+      [req.user.id, transactionId]
+    );
+
+    res.status(200).json({ success: true, message: "Transaction approved" });
+  })
+);
+
+app.put(
+  "/api/transactions/:transactionId/reject",
+  adminMiddleware,
+  asyncHandler(async (req, res) => {
+    const { transactionId } = req.params;
+    const txResult = await query("SELECT * FROM transactions WHERE id = $1", [transactionId]);
+    if (txResult.rows.length === 0) {
+      return res.status(404).json({ success: false, detail: "Transaction not found" });
+    }
+
+    const tx = txResult.rows[0];
+    if (tx.status !== "pending") {
+      return res.status(400).json({ success: false, detail: "Transaction already processed" });
+    }
+
+    await query(
+      "UPDATE transactions SET status = 'rejected', processed_by = $1, processed_at = NOW() WHERE id = $2",
+      [req.user.id, transactionId]
+    );
+
+    res.status(200).json({ success: true, message: "Transaction rejected" });
+  })
+);
+
+app.get(
+  "/api/admin/stats",
+  adminMiddleware,
+  asyncHandler(async (_req, res) => {
+    const totalUsersResult = await query("SELECT COUNT(*)::int AS count FROM users WHERE role = 'user'");
+    const activeUsersResult = await query(
+      "SELECT COUNT(*)::int AS count FROM users WHERE role = 'user' AND status = 'active'"
+    );
+    const totalTradersResult = await query("SELECT COUNT(*)::int AS count FROM traders WHERE is_active = TRUE");
+    const totalTransactionsResult = await query("SELECT COUNT(*)::int AS count FROM transactions");
+    const pendingTransactionsResult = await query(
+      "SELECT COUNT(*)::int AS count FROM transactions WHERE status = 'pending'"
+    );
+    const totalPlansResult = await query("SELECT COUNT(*)::int AS count FROM plans WHERE is_active = TRUE");
+    const totalRevenueResult = await query(
+      "SELECT COALESCE(SUM(amount),0) AS total FROM transactions WHERE type = 'deposit' AND status = 'completed'"
+    );
+    const pendingWithdrawalsResult = await query(
+      "SELECT COUNT(*)::int AS count FROM transactions WHERE type = 'withdrawal' AND status = 'pending'"
+    );
+    const totalPlatformBalanceResult = await query("SELECT COALESCE(SUM(balance),0) AS total FROM users");
+
+    res.status(200).json({
+      success: true,
+      stats: {
+        total_users: totalUsersResult.rows[0].count,
+        total_traders: totalTradersResult.rows[0].count,
+        total_transactions: totalTransactionsResult.rows[0].count,
+        pending_transactions: pendingTransactionsResult.rows[0].count,
+        total_plans: totalPlansResult.rows[0].count,
+        total_platform_balance: parseNumber(totalPlatformBalanceResult.rows[0].total),
+        totalUsers: totalUsersResult.rows[0].count,
+        activeUsers: activeUsersResult.rows[0].count,
+        totalRevenue: parseNumber(totalRevenueResult.rows[0].total),
+        pendingWithdrawals: pendingWithdrawalsResult.rows[0].count,
+      },
+    });
+  })
+);
+
+app.get(
+  "/api/health",
+  asyncHandler(async (_req, res) => {
+    try {
+      await query("SELECT 1");
       res.status(200).json({
-        success: true,
-        user_id: userId,
-        balance: user.balance,
-        email: user.email,
-        full_name: user.full_name,
+        status: "healthy",
+        service: "monacaptradingpro-backend",
+        database: "connected",
       });
-    })
-  );
-
-app.put(
-    "/api/admin/users/:userId/balance",
-    requireAdmin,
-    asyncHandler(async (req, res) => {
-      const { userId } = req.params;
-      const { balance } = req.body;
-
-      if (balance === undefined) {
-        return res.status(400).json({ success: false, detail: "Balance amount required" });
-      }
-
-      const userRef = await resolveUserRef(db, userId);
-      if (!userRef) {
-        return res.status(404).json({ success: false, detail: "User not found" });
-      }
-      await userRef.set(
-        { balance: Number(balance), updated_at: new Date() },
-        { merge: true }
-      );
-
-      res.status(200).json({ success: true, message: "Balance updated successfully" });
-    })
-  );
+    } catch (error) {
+      res.status(500).json({
+        status: "unhealthy",
+        service: "monacaptradingpro-backend",
+        database: "disconnected",
+        error: error.message || String(error),
+      });
+    }
+  })
+);
 
 app.get(
-    "/api/transactions",
-    requireAdmin,
-    asyncHandler(async (_req, res) => {
-      const snapshot = await db.collection("transactions").get();
-      const transactions = snapshot.docs.map((doc) => docToData(doc, "transaction_id"));
-      res.status(200).json({ success: true, transactions });
-    })
-  );
-
-app.put(
-    "/api/transactions/:transactionId/approve",
-    requireAdmin,
-    asyncHandler(async (req, res) => {
-      const { transactionId } = req.params;
-      const snapshot = await db
-        .collection("transactions")
-        .where("transaction_id", "==", transactionId)
-        .limit(1)
-        .get();
-      if (snapshot.empty) {
-        return res.status(404).json({ success: false, detail: "Transaction not found" });
-      }
-      const txDoc = snapshot.docs[0];
-      const txData = txDoc.data() || {};
-      if (txData.status && txData.status !== "pending") {
-        return res.status(400).json({ success: false, detail: "Transaction already processed" });
-      }
-
-      const userId = txData.user_id;
-      const amount = Number(txData.amount || 0);
-      if (userId && Number.isFinite(amount)) {
-        const userRef = await resolveUserRef(db, userId);
-        if (userRef) {
-          const userSnap = await userRef.get();
-          const balance = userSnap.exists ? userSnap.data()?.balance || 0 : 0;
-          let newBalance = balance;
-          if (txData.type === "deposit") {
-            newBalance = balance + amount;
-          } else if (txData.type === "withdrawal") {
-            newBalance = balance - amount;
-            if (newBalance < 0) {
-              return res.status(400).json({ success: false, detail: "Insufficient balance" });
-            }
-          }
-          await userRef.set({ balance: newBalance, updated_at: new Date() }, { merge: true });
-        }
-      }
-
-      await txDoc.ref.set(
-        {
-          status: "completed",
-          processed_by: req.user.user_id,
-          processed_at: new Date(),
-        },
-        { merge: true }
-      );
-
-      res.status(200).json({ success: true, message: "Transaction approved" });
-    })
-  );
-
-app.put(
-    "/api/transactions/:transactionId/reject",
-    requireAdmin,
-    asyncHandler(async (req, res) => {
-      const { transactionId } = req.params;
-      const snapshot = await db
-        .collection("transactions")
-        .where("transaction_id", "==", transactionId)
-        .limit(1)
-        .get();
-      if (snapshot.empty) {
-        return res.status(404).json({ success: false, detail: "Transaction not found" });
-      }
-      const txDoc = snapshot.docs[0];
-      const txData = txDoc.data() || {};
-      if (txData.status && txData.status !== "pending") {
-        return res.status(400).json({ success: false, detail: "Transaction already processed" });
-      }
-
-      await txDoc.ref.set(
-        {
-          status: "rejected",
-          processed_by: req.user.user_id,
-          processed_at: new Date(),
-        },
-        { merge: true }
-      );
-
-      res.status(200).json({ success: true, message: "Transaction rejected" });
-    })
-  );
-
-app.get(
-    "/api/admin/stats",
-    requireAdmin,
-    asyncHandler(async (_req, res) => {
-      const totalUsersSnapshot = await db.collection("users").where("role", "==", "user").get();
-      const activeUsersSnapshot = await db
-        .collection("users")
-        .where("role", "==", "user")
-        .where("status", "==", "active")
-        .get();
-      const totalTradersSnapshot = await db.collection("traders").where("is_active", "==", true).get();
-      const totalTransactionsSnapshot = await db.collection("transactions").get();
-      const pendingTransactionsSnapshot = await db
-        .collection("transactions")
-        .where("status", "==", "pending")
-        .get();
-      const totalPlansSnapshot = await db.collection("plans").where("is_active", "==", true).get();
-
-      const revenueSnapshot = await db
-        .collection("transactions")
-        .where("type", "==", "deposit")
-        .where("status", "==", "completed")
-        .get();
-      const pendingWithdrawalsSnapshot = await db
-        .collection("transactions")
-        .where("type", "==", "withdrawal")
-        .where("status", "==", "pending")
-        .get();
-
-      const totalPlatformBalance = totalUsersSnapshot.docs.reduce(
-        (sum, doc) => sum + (doc.data()?.balance || 0),
-        0
-      );
-
-      const totalRevenue = revenueSnapshot.docs.reduce(
-        (sum, doc) => sum + (doc.data()?.amount || 0),
-        0
-      );
-
-      const totalUsers = totalUsersSnapshot.size;
-      const activeUsers = activeUsersSnapshot.size;
-      const totalTraders = totalTradersSnapshot.size;
-      const totalTransactions = totalTransactionsSnapshot.size;
-      const pendingTransactions = pendingTransactionsSnapshot.size;
-      const totalPlans = totalPlansSnapshot.size;
-      const pendingWithdrawals = pendingWithdrawalsSnapshot.size;
-
+  "/health",
+  asyncHandler(async (_req, res) => {
+    try {
+      await query("SELECT 1");
       res.status(200).json({
-        success: true,
-        stats: {
-          total_users: totalUsers,
-          total_traders: totalTraders,
-          total_transactions: totalTransactions,
-          pending_transactions: pendingTransactions,
-          total_plans: totalPlans,
-          total_platform_balance: totalPlatformBalance,
-          totalUsers,
-          activeUsers,
-          totalRevenue,
-          pendingWithdrawals,
-        },
+        status: "healthy",
+        service: "monacaptradingpro-backend",
+        database: "connected",
       });
-    })
-  );
-
-app.get(
-    "/api/health",
-    asyncHandler(async (_req, res) => {
-      try {
-        await db.collection("_health").limit(1).get();
-        res.status(200).json({
-          status: "healthy",
-          service: "monacaptradingpro-backend",
-          database: "connected",
-        });
-      } catch (error) {
-        res.status(500).json({
-          status: "unhealthy",
-          service: "monacaptradingpro-backend",
-          database: "disconnected",
-          error: error.message || String(error),
-        });
-      }
-    })
-  );
-
-app.get(
-    "/health",
-    asyncHandler(async (_req, res) => {
-      try {
-        await db.collection("_health").limit(1).get();
-        res.status(200).json({
-          status: "healthy",
-          service: "monacaptradingpro-backend",
-          database: "connected",
-        });
-      } catch (error) {
-        res.status(500).json({
-          status: "unhealthy",
-          service: "monacaptradingpro-backend",
-          database: "disconnected",
-          error: error.message || String(error),
-        });
-      }
-    })
-  );
+    } catch (error) {
+      res.status(500).json({
+        status: "unhealthy",
+        service: "monacaptradingpro-backend",
+        database: "disconnected",
+        error: error.message || String(error),
+      });
+    }
+  })
+);
 
 app.use((err, _req, res, _next) => {
   console.error(err);

@@ -1,11 +1,10 @@
 import "./App.css";
 import "./i18n";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ChatWidget from "./components/ChatWidget";
-import AuthCallback from "./components/AuthCallback";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -23,14 +22,6 @@ import Insight from "./pages/Insight";
 import { Toaster } from "./components/ui/toaster";
 
 function AppRouter() {
-  const location = useLocation();
-  
-  // Check for session_id in URL hash for auth callback
-  // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-  if (location.hash?.includes('session_id=')) {
-    return <AuthCallback />;
-  }
-  
   return (
     <>
       <Navbar />

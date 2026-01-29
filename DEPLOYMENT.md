@@ -1,12 +1,14 @@
 # MonaCap Pro Trading Platform
 
-A full-stack trading platform built with React, Express, and Firebase.
+A full-stack trading platform built with React and Supabase (Auth + Postgres + RLS).
+The Express backend remains in the repo but is no longer required when using Supabase.
 
 ## Project Structure
 
 ```
 ├── frontend/          # React frontend application
-├── backend/           # Express backend API (separate deployment)
+├── backend/           # Legacy Express API (optional)
+├── supabase/          # Supabase schema + seed SQL
 └── vercel.json        # Vercel deployment configuration
 ```
 
@@ -34,22 +36,23 @@ npm install
 
 **Frontend (.env.local):**
 ```
-REACT_APP_FIREBASE_API_KEY=your_api_key
-REACT_APP_FIREBASE_AUTH_DOMAIN=vct-trading.firebaseapp.com
-REACT_APP_FIREBASE_PROJECT_ID=vct-trading
-REACT_APP_FIREBASE_STORAGE_BUCKET=vct-trading.firebasestorage.app
-REACT_APP_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-REACT_APP_FIREBASE_APP_ID=your_app_id
-REACT_APP_BACKEND_URL=http://localhost:8001
+REACT_APP_SUPABASE_URL=your_supabase_project_url
+REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-**Backend (.env):**
+**Backend (.env) - legacy only if you still run Express:**
 ```
-FIREBASE_SERVICE_ACCOUNT_JSON={"type":"service_account",...}
-PORT=8001
+DATABASE_URL=postgres://USER:PASSWORD@HOST:PORT/DATABASE
 JWT_SECRET=your_jwt_secret
+JWT_EXPIRES_IN=7d
+PORT=8001
 APP_URL=http://localhost:3000
 CORS_ORIGINS=http://localhost:3000
+UPLOAD_DIR=/var/data/uploads
+MIN_DEPOSIT=250
+MIN_WITHDRAWAL=100
+MAX_WITHDRAWAL=100000
+MAX_DEPOSIT=1000000
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USERNAME=your_email
@@ -64,13 +67,33 @@ cd frontend
 npm start
 ```
 
-**Backend only:**
+**Backend only (legacy):**
 ```bash
 cd backend
 npm start
 ```
 
 ## Deployment
+
+### Supabase (Recommended)
+
+1. Create a Supabase project.
+2. Run `supabase/schema.sql` in the Supabase SQL editor.
+3. (Optional) Run `supabase/seed.sql` to load starter traders/plans/wallets.
+4. Set frontend env vars (see above) and deploy the frontend.
+
+### Render (Legacy backend)
+
+1. **Create a Render Postgres database** and copy the `DATABASE_URL`.
+2. **Create a Render Web Service** for the backend:
+   - Root directory: `backend`
+   - Build command: `npm install`
+   - Start command: `npm start`
+3. **Set environment variables** (see `.env.example`):
+   - `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`
+   - `CORS_ORIGINS`, `APP_URL`
+   - `MIN_DEPOSIT`, `MIN_WITHDRAWAL`, `MAX_WITHDRAWAL`, `MAX_DEPOSIT`
+   - SMTP settings (optional)
 
 ### Frontend Deployment to Vercel
 
@@ -82,15 +105,10 @@ npm start
 
 2. **Set Environment Variables:**
    - In Vercel Project Settings → Environment Variables, add:
-   
+
    ```
-   REACT_APP_FIREBASE_API_KEY=your_api_key
-   REACT_APP_FIREBASE_AUTH_DOMAIN=vct-trading.firebaseapp.com
-   REACT_APP_FIREBASE_PROJECT_ID=vct-trading
-   REACT_APP_FIREBASE_STORAGE_BUCKET=vct-trading.firebasestorage.app
-   REACT_APP_FIREBASE_MESSAGING_SENDER_ID=66965555658
-   REACT_APP_FIREBASE_APP_ID=1:66965555658:web:4b06dbb9e7d1e26fbce733
-   REACT_APP_BACKEND_URL=https://your-backend-url.com
+   REACT_APP_SUPABASE_URL=https://your-project.supabase.co
+   REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
    ```
 
 3. **Deploy:**
@@ -147,22 +165,22 @@ Then deploy using Docker to your server.
 ### Frontend
 - **Framework:** React 18
 - **UI Components:** Radix UI
-- **Authentication:** Firebase Auth
+- **Authentication:** JWT (backend)
 - **State Management:** Context API
 - **HTTP Client:** Axios
 - **Build Tool:** Create React App
 
 ### Backend
 - **Framework:** Express.js
-- **Database:** Firebase Firestore
-- **Authentication:** Firebase Admin SDK
+- **Database:** PostgreSQL
+- **Authentication:** JWT + bcrypt
 - **Email Service:** Nodemailer
 - **Runtime:** Node.js 20.x
 
 ## Key Features
 
-- User authentication with Firebase
-- Real-time data synchronization
+- User authentication with JWT
+- Postgres-backed data storage
 - Copy trading functionality
 - Dashboard with trading statistics
 - Admin management panel

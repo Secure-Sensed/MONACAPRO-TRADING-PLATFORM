@@ -11,10 +11,10 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { TrendingUp, TrendingDown, DollarSign, Calendar, BarChart3 } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Calendar, BarChart3, Copy } from 'lucide-react';
 import { toast } from '../hooks/use-toast';
 
-const CopyTraderDialog = ({ trader, isOpen, onClose, userBalance = 0 }) => {
+const CopyTraderDialog = ({ trader, isOpen, onClose, userBalance = 0, onStartCopy }) => {
   const [depositAmount, setDepositAmount] = useState('');
   const [isDepositing, setIsDepositing] = useState(false);
 
@@ -98,17 +98,42 @@ const CopyTraderDialog = ({ trader, isOpen, onClose, userBalance = 0 }) => {
       return;
     }
 
+    if (amount > userBalance) {
+      toast({
+        title: 'Insufficient Balance',
+        description: 'Your balance is too low to start this copy trade.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     setIsDepositing(true);
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      if (!onStartCopy) {
+        throw new Error('Copy trading is not available.');
+      }
+
+      const result = await onStartCopy(amount);
+      if (!result?.success) {
+        throw new Error(result?.error || 'Unable to start copy trade.');
+      }
+
       toast({
-        title: 'Deposit Successful',
-        description: `You are now copying ${trader.name} with $${amount}`,
+        title: 'Copy Trade Started',
+        description: `You are now copying ${trader.name} with $${amount}`
       });
-      setIsDepositing(false);
+      setDepositAmount('');
       onClose();
-    }, 1500);
+    } catch (error) {
+      toast({
+        title: 'Copy Trade Failed',
+        description: error?.message || 'Unable to start copy trade',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsDepositing(false);
+    }
   };
 
   if (!trader) return null;
