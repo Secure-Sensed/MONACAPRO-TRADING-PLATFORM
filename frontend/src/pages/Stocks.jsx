@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { TrendingUp, TrendingDown, DollarSign, BarChart3, Search } from 'lucide-react';
 import { Input } from '../components/ui/input';
+import { useAuth } from '../context/AuthContext';
 
 const stockData = [
   { symbol: 'AAPL', name: 'Apple Inc.', price: 178.52, change: 2.45, changePercent: 1.39, volume: '52.4M', marketCap: '2.8T' },
@@ -24,6 +26,16 @@ const Stocks = () => {
   const [stocks, setStocks] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+
+  const handleTradeClick = () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+    } else {
+      navigate('/dashboard');
+    }
+  };
 
   useEffect(() => {
     // Simulate loading
@@ -151,7 +163,10 @@ const Stocks = () => {
                         </div>
                       </div>
 
-                      <Button className="bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white">
+                      <Button 
+                        onClick={handleTradeClick}
+                        className="bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white"
+                      >
                         Trade
                       </Button>
                     </div>
