@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '../components/ui/button';
@@ -16,6 +16,31 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { tradingStats, features, tradingAssets, achievements } from '../data/mockData';
+
+// Animated text variants
+const textVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05,
+      delayChildren: 0.2,
+    },
+  },
+};
+
+const letterVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: 'spring',
+      stiffness: 100,
+      damping: 10,
+    },
+  },
+};
 
 const fadeInUp = {
   initial: { opacity: 0, y: 60 },
@@ -49,8 +74,33 @@ const scaleIn = {
   transition: { duration: 0.5 }
 };
 
+// Animated Text Component
+const AnimatedText = ({ text, className = '' }) => {
+  return (
+    <motion.div
+      className={className}
+      variants={textVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      {text.split('').map((char, index) => (
+        <motion.span key={index} variants={letterVariants}>
+          {char}
+        </motion.span>
+      ))}
+    </motion.div>
+  );
+};
+
 const Home = () => {
   const navigate = useNavigate();
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const heroPillars = [
     { icon: Shield, title: 'Risk-layered security', detail: 'Multi-signal fraud detection & guarded workflows' },
@@ -159,71 +209,109 @@ const Home = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#05070f] text-white">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden pt-28 pb-24 px-4">
+    <div className="min-h-screen bg-gradient-to-b from-[#05070f] via-[#0f1929] to-[#05070f] text-white overflow-hidden">
+      {/* Hero Section with Video Theme */}
+      <section className="relative overflow-hidden pt-28 pb-24 px-4 min-h-screen flex items-center">
+        {/* Cinematic Background Effects */}
         <motion.div
-          className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.18),_transparent_55%)]"
-          animate={{ opacity: [0.6, 0.85, 0.6] }}
-          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <motion.div
-          className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-gradient-to-br from-cyan-500/30 to-blue-700/10 blur-3xl"
-          animate={{ scale: [1, 1.15, 1] }}
+          className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.15),_transparent_60%)]"
+          animate={{ opacity: [0.5, 0.8, 0.5] }}
           transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
         />
         <motion.div
-          className="absolute bottom-0 left-0 h-80 w-80 rounded-full bg-gradient-to-tr from-amber-300/20 to-transparent blur-3xl"
-          animate={{ y: [0, -20, 0] }}
-          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-gradient-to-br from-cyan-500/25 to-blue-700/15 blur-3xl"
+          animate={{ 
+            scale: [1, 1.2, 1],
+            x: [0, 30, 0],
+            y: [0, -30, 0]
+          }}
+          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div
+          className="absolute bottom-0 left-0 h-80 w-80 rounded-full bg-gradient-to-tr from-amber-300/15 to-orange-500/10 blur-3xl"
+          animate={{ 
+            scale: [1, 1.15, 1],
+            y: [0, -40, 0]
+          }}
+          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
         />
 
         <div className="max-w-7xl mx-auto relative z-10 grid lg:grid-cols-[1.05fr_0.95fr] gap-16 items-center">
           <div>
             <motion.p
-              className="uppercase tracking-[0.3em] text-xs text-cyan-300 font-semibold mb-5"
-              {...fadeInUp}
+              className="uppercase tracking-[0.3em] text-xs text-cyan-300 font-semibold mb-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.1 }}
             >
-              Monacap Trading Pro
+              MONACAP TRADING PRO
             </motion.p>
-            <motion.h1
-              className="text-5xl md:text-6xl font-bold leading-tight mb-6 font-['Gloock']"
-              {...fadeInUp}
-            >
-              Build wealth with a premium trading experience designed for{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-blue-400 to-indigo-400">
-                modern investors
-              </span>
-            </motion.h1>
+
+            {/* Animated Main Heading */}
+            <div className="mb-8 overflow-hidden">
+              <motion.h1
+                className="text-5xl md:text-7xl font-bold leading-tight font-['Gloock']"
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.9, delay: 0.2 }}
+              >
+                <div className="mb-4">
+                  <AnimatedText text="Build wealth" className="text-white" />
+                </div>
+                <div className="mb-4">
+                  <AnimatedText 
+                    text="with a premium"
+                    className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-blue-400 to-indigo-400"
+                  />
+                </div>
+                <div>
+                  <AnimatedText 
+                    text="trading experience"
+                    className="text-white"
+                  />
+                </div>
+              </motion.h1>
+            </div>
+
             <motion.p
-              className="text-lg md:text-xl text-slate-300 leading-relaxed mb-8"
+              className="text-lg md:text-xl text-slate-300 leading-relaxed mb-8 max-w-2xl"
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.15 }}
+              transition={{ duration: 0.8, delay: 0.5 }}
             >
               Trade global markets with clarity, confidence, and control. Monacap Trading Pro combines copy trading,
               professional analytics, and smart risk management in one elevated platform.
             </motion.p>
 
             <motion.div
-              className="flex flex-col sm:flex-row gap-4 mb-10"
+              className="flex flex-col sm:flex-row gap-4 mb-12"
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.3 }}
+              transition={{ duration: 0.8, delay: 0.65 }}
             >
-              <Button
-                onClick={() => navigate('/register')}
-                className="bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 hover:from-cyan-500 hover:via-blue-600 hover:to-indigo-600 text-white px-8 py-6 text-lg shadow-2xl shadow-cyan-500/40"
+              <motion.div
+                whileHover={{ scale: 1.05, boxShadow: '0 20px 50px rgba(34, 211, 238, 0.4)' }}
+                whileTap={{ scale: 0.98 }}
               >
-                Open an account
-              </Button>
-              <Button
-                onClick={() => navigate('/login')}
-                variant="outline"
-                className="border border-cyan-300 text-cyan-200 hover:bg-cyan-300/10 px-8 py-6 text-lg"
+                <Button
+                  onClick={() => navigate('/register')}
+                  className="bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 hover:from-cyan-500 hover:via-blue-600 hover:to-indigo-600 text-white px-8 py-6 text-lg shadow-2xl shadow-cyan-500/40 transition-all"
+                >
+                  Open an account
+                </Button>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.98 }}
               >
-                Access dashboard
-              </Button>
+                <Button
+                  onClick={() => navigate('/login')}
+                  variant="outline"
+                  className="border border-cyan-300 text-cyan-200 hover:bg-cyan-300/10 px-8 py-6 text-lg transition-all"
+                >
+                  Access dashboard
+                </Button>
+              </motion.div>
             </motion.div>
 
             <motion.div
@@ -236,7 +324,8 @@ const Home = () => {
                 <motion.div
                   key={pillar.title}
                   variants={scaleIn}
-                  className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur"
+                  whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.1)' }}
+                  className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur transition-all cursor-pointer"
                 >
                   <pillar.icon className="h-6 w-6 text-cyan-300 mb-3" />
                   <p className="text-sm font-semibold text-white">{pillar.title}</p>
@@ -378,6 +467,28 @@ const Home = () => {
               experience built for performance and confidence.
             </p>
           </motion.div>
+      {/* Premium Features Section with Video-Themed Backgrounds */}
+      <section className="py-20 px-4 relative overflow-hidden">
+        {/* Themed background gradients */}
+        <motion.div
+          className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-cyan-500/15 to-blue-600/10 rounded-full blur-3xl"
+          animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.7, 0.4] }}
+          transition={{ duration: 10, repeat: Infinity }}
+        />
+        <motion.div
+          className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-indigo-500/10 to-cyan-400/5 rounded-full blur-3xl"
+          animate={{ scale: [1.2, 1, 1.2], opacity: [0.3, 0.6, 0.3] }}
+          transition={{ duration: 12, repeat: Infinity }}
+        />
+
+        <div className="max-w-7xl mx-auto relative z-10">
+          <motion.div className="mb-16 text-center" {...fadeInUp}>
+            <p className="text-sm uppercase tracking-[0.3em] text-cyan-300 mb-4">Premium Features</p>
+            <h2 className="text-4xl md:text-5xl font-bold font-['Gloock'] mb-6">Everything you need to trade like a pro</h2>
+            <p className="text-slate-300 max-w-3xl mx-auto text-lg leading-relaxed">
+              Comprehensive tools and features designed for every trader, from beginners to professionals
+            </p>
+          </motion.div>
 
           <motion.div
             className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
@@ -386,33 +497,60 @@ const Home = () => {
             whileInView="animate"
             viewport={{ once: true, amount: 0.2 }}
           >
-            {premiumFeatures.map((feature) => (
-              <motion.div key={feature.title} variants={scaleIn}>
-                <Card className="bg-[#0b1220] border border-white/10 rounded-3xl h-full hover:border-cyan-400/40 hover:shadow-[0_30px_80px_-40px_rgba(34,211,238,0.6)] transition-all">
-                  <CardContent className="p-6 flex flex-col gap-4 h-full">
-                    <feature.icon className="h-8 w-8 text-cyan-300" />
-                    <div>
-                      <h3 className="text-xl font-semibold text-white">{feature.title}</h3>
-                      <p className="text-sm text-slate-400 mt-2 leading-relaxed">{feature.description}</p>
-                    </div>
-                    <ul className="mt-auto space-y-2">
-                      {feature.highlights.map((item) => (
-                        <li key={item} className="flex items-center text-xs text-slate-300">
-                          <CheckCircle className="h-4 w-4 text-emerald-300 mr-2" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
+            {premiumFeatures.map((feature, index) => (
+              <motion.div 
+                key={feature.title} 
+                variants={scaleIn}
+                whileHover={{ 
+                  scale: 1.05,
+                  boxShadow: '0 30px 80px -40px rgba(34,211,238,0.6)'
+                }}
+              >
+                <div className="relative group h-full">
+                  {/* Animated gradient border */}
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-br from-cyan-400/20 to-blue-600/10 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity"
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ duration: 3, repeat: Infinity, delay: index * 0.2 }}
+                  />
+                  <Card className="bg-gradient-to-br from-[#0b1220]/80 to-[#0f1929]/60 border border-white/10 rounded-3xl h-full backdrop-blur-sm hover:border-cyan-400/40 transition-all relative z-10">
+                    <CardContent className="p-8 flex flex-col gap-6 h-full">
+                      <motion.div
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        whileInView={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <feature.icon className="h-10 w-10 text-cyan-300" />
+                      </motion.div>
+                      <div>
+                        <h3 className="text-xl font-semibold text-white">{feature.title}</h3>
+                        <p className="text-sm text-slate-400 mt-3 leading-relaxed">{feature.description}</p>
+                      </div>
+                      <ul className="mt-auto space-y-3">
+                        {feature.highlights.map((item, i) => (
+                          <motion.li 
+                            key={item} 
+                            className="flex items-center text-sm text-slate-300"
+                            initial={{ opacity: 0, x: -20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.1 + i * 0.05 }}
+                          >
+                            <CheckCircle className="h-4 w-4 text-emerald-300 mr-3 flex-shrink-0" />
+                            {item}
+                          </motion.li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </div>
               </motion.div>
             ))}
           </motion.div>
         </div>
       </section>
 
-      {/* Trading Assets Section */}
-      <section className="py-20 px-4 bg-gradient-to-b from-[#05070f] via-[#0b1220] to-[#05070f]">
+      {/* Trading Assets Section with Video-Themed Design */}
+      <section className="py-20 px-4 bg-gradient-to-b from-[#05070f] via-[#0a0f1f] to-[#05070f] relative overflow-hidden">
         <div className="max-w-7xl mx-auto">
           <motion.div className="max-w-3xl mb-10" {...fadeInLeft}>
             <p className="text-sm uppercase tracking-[0.3em] text-cyan-300 mb-4">Markets</p>
