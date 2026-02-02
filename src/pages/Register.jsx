@@ -17,6 +17,8 @@ const Register = () => {
     confirmPassword: ''
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -107,29 +109,49 @@ const Register = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password" className="text-gray-300">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="Create a password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                className="bg-[#0a1628] border-gray-600 text-white placeholder:text-gray-500"
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Create a password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  className="bg-[#0a1628] border-gray-600 text-white placeholder:text-gray-500 pr-10"
+                />
+                <button
+                  type="button"
+                  className="absolute right-2 top-2 text-gray-400 hover:text-gray-200 text-sm"
+                  onClick={() => setShowPassword((v) => !v)}
+                  tabIndex={-1}
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword" className="text-gray-300">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                placeholder="Confirm your password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required
-                className="bg-[#0a1628] border-gray-600 text-white placeholder:text-gray-500"
-              />
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirm your password"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  required
+                  className="bg-[#0a1628] border-gray-600 text-white placeholder:text-gray-500 pr-10"
+                />
+                <button
+                  type="button"
+                  className="absolute right-2 top-2 text-gray-400 hover:text-gray-200 text-sm"
+                  onClick={() => setShowConfirmPassword((v) => !v)}
+                  tabIndex={-1}
+                >
+                  {showConfirmPassword ? "Hide" : "Show"}
+                </button>
+              </div>
             </div>
             <Button
               type="submit"
