@@ -467,6 +467,9 @@ const Home = () => {
               experience built for performance and confidence.
             </p>
           </motion.div>
+        </div>
+      </section>
+
       {/* Premium Features Section with Video-Themed Backgrounds */}
       <section className="py-20 px-4 relative overflow-hidden">
         {/* Themed background gradients */}

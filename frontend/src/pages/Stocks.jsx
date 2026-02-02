@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -7,7 +7,22 @@ import { TrendingUp, TrendingDown, DollarSign, BarChart3, Search } from 'lucide-
 import { Input } from '../components/ui/input';
 import { useAuth } from '../context/AuthContext';
 
-const stockData = [
+const STOCK_LIST = [
+  { symbol: 'AAPL', name: 'Apple Inc.' },
+  { symbol: 'MSFT', name: 'Microsoft Corporation' },
+  { symbol: 'GOOGL', name: 'Alphabet Inc.' },
+  { symbol: 'AMZN', name: 'Amazon.com Inc.' },
+  { symbol: 'TSLA', name: 'Tesla Inc.' },
+  { symbol: 'META', name: 'Meta Platforms Inc.' },
+  { symbol: 'NVDA', name: 'NVIDIA Corporation' },
+  { symbol: 'JPM', name: 'JPMorgan Chase & Co.' },
+  { symbol: 'V', name: 'Visa Inc.' },
+  { symbol: 'WMT', name: 'Walmart Inc.' },
+  { symbol: 'DIS', name: 'The Walt Disney Company' },
+  { symbol: 'NFLX', name: 'Netflix Inc.' }
+];
+
+const FALLBACK_DATA = [
   { symbol: 'AAPL', name: 'Apple Inc.', price: 178.52, change: 2.45, changePercent: 1.39, volume: '52.4M', marketCap: '2.8T' },
   { symbol: 'MSFT', name: 'Microsoft Corporation', price: 384.79, change: -1.23, changePercent: -0.32, volume: '24.1M', marketCap: '2.9T' },
   { symbol: 'GOOGL', name: 'Alphabet Inc.', price: 141.80, change: 3.67, changePercent: 2.66, volume: '28.7M', marketCap: '1.8T' },
@@ -19,13 +34,32 @@ const stockData = [
   { symbol: 'V', name: 'Visa Inc.', price: 279.34, change: 3.12, changePercent: 1.13, volume: '6.8M', marketCap: '583B' },
   { symbol: 'WMT', name: 'Walmart Inc.', price: 165.23, change: 1.89, changePercent: 1.16, volume: '7.3M', marketCap: '442B' },
   { symbol: 'DIS', name: 'The Walt Disney Company', price: 112.45, change: -2.34, changePercent: -2.04, volume: '11.2M', marketCap: '205B' },
-  { symbol: 'NFLX', name: 'Netflix Inc.', price: 487.93, change: 6.78, changePercent: 1.41, volume: '4.5M', marketCap: '210B' },
+  { symbol: 'NFLX', name: 'Netflix Inc.', price: 487.93, change: 6.78, changePercent: 1.41, volume: '4.5M', marketCap: '210B' }
 ];
+
+const toNumber = (value, fallback = 0) => {
+  if (value === null || value === undefined) return fallback;
+  const num = Number(value);
+  return Number.isFinite(num) ? num : fallback;
+};
+
+const formatCompact = (value) => {
+  if (!Number.isFinite(value)) return '—';
+  if (value >= 1e12) return `${(value / 1e12).toFixed(1)}T`;
+  if (value >= 1e9) return `${(value / 1e9).toFixed(1)}B`;
+  if (value >= 1e6) return `${(value / 1e6).toFixed(1)}M`;
+  if (value >= 1e3) return `${(value / 1e3).toFixed(1)}K`;
+  return value.toFixed(0);
+};
+
+const getLogoUrl = (symbol) => `https://financialmodelingprep.com/image-stock/${symbol}.png`;
 
 const Stocks = () => {
   const [stocks, setStocks] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState('');
+  const [logoErrors, setLogoErrors] = useState({});
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
@@ -37,13 +71,65 @@ const Stocks = () => {
     }
   };
 
-  useEffect(() => {
-    // Simulate loading
-    setTimeout(() => {
-      setStocks(stockData);
+  const fetchStocks = useCallback(async () => {
+    const apiKey = process.env.REACT_APP_FMP_API_KEY;
+    if (!apiKey) {
+      setApiError('Missing API key. Set REACT_APP_FMP_API_KEY to enable real-time prices.');
+      setStocks(FALLBACK_DATA.map((stock) => ({
+        ...stock,
+        logo: getLogoUrl(stock.symbol)
+      })));
       setLoading(false);
-    }, 1000);
+      return;
+    }
+
+    try {
+      const symbols = STOCK_LIST.map((stock) => stock.symbol).join(',');
+      const response = await fetch(`https://financialmodelingprep.com/stable/quote?symbol=${symbols}&apikey=${apiKey}`);
+      if (!response.ok) {
+        throw new Error(`Stock API error: ${response.status}`);
+      }
+      const data = await response.json();
+
+      const mapped = STOCK_LIST.map((stock) => {
+        const quote = data.find((item) => item.symbol === stock.symbol) || {};
+        const price = toNumber(quote.price, 0);
+        const change = toNumber(quote.change, 0);
+        const changePercent = toNumber(quote.changesPercentage, 0);
+        const volume = toNumber(quote.volume, 0);
+        const marketCap = toNumber(quote.marketCap, 0);
+
+        return {
+          symbol: stock.symbol,
+          name: quote.name || stock.name,
+          price: price || 0,
+          change,
+          changePercent: Number(changePercent.toFixed(2)),
+          volume: volume ? formatCompact(volume) : '—',
+          marketCap: marketCap ? formatCompact(marketCap) : '—',
+          logo: getLogoUrl(stock.symbol)
+        };
+      });
+
+      setApiError('');
+      setStocks(mapped);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching real-time stocks:', error);
+      setApiError('Real-time data unavailable. Showing cached values.');
+      setStocks(FALLBACK_DATA.map((stock) => ({
+        ...stock,
+        logo: getLogoUrl(stock.symbol)
+      })));
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchStocks();
+    const interval = setInterval(fetchStocks, 30000);
+    return () => clearInterval(interval);
+  }, [fetchStocks]);
 
   const filteredStocks = stocks.filter(stock => 
     stock.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -122,6 +208,9 @@ const Stocks = () => {
           </div>
         ) : (
           <div className="grid gap-4">
+            {apiError && (
+              <div className="text-center text-sm text-amber-300">{apiError}</div>
+            )}
             {filteredStocks.map((stock, index) => (
               <motion.div
                 key={stock.symbol}
@@ -133,8 +222,19 @@ const Stocks = () => {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center">
-                          <span className="text-white font-bold text-sm">{stock.symbol.substring(0, 2)}</span>
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center overflow-hidden ${logoErrors[stock.symbol] ? 'bg-gradient-to-br from-cyan-400 to-blue-500' : 'bg-white/10'}`}>
+                          {logoErrors[stock.symbol] ? (
+                            <span className="text-white font-bold text-sm">{stock.symbol.substring(0, 2)}</span>
+                          ) : (
+                            <img
+                              src={stock.logo}
+                              alt={`${stock.symbol} logo`}
+                              className="w-8 h-8 object-contain"
+                              onError={() => {
+                                setLogoErrors((prev) => ({ ...prev, [stock.symbol]: true }));
+                              }}
+                            />
+                          )}
                         </div>
                         <div>
                           <h3 className="text-white font-bold text-lg">{stock.symbol}</h3>
@@ -143,7 +243,7 @@ const Stocks = () => {
                       </div>
 
                       <div className="text-right">
-                        <p className="text-white font-bold text-2xl">${stock.price}</p>
+                        <p className="text-white font-bold text-2xl">${stock.price?.toLocaleString?.() ?? stock.price}</p>
                         <div className={`flex items-center justify-end space-x-1 ${stock.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                           {stock.change >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                           <span className="font-semibold">

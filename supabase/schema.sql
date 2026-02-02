@@ -25,9 +25,17 @@ create table if not exists public.profiles (
   phone text,
   country text,
   picture text,
+  kyc_status text not null default 'pending',
+  two_factor_enabled boolean not null default false,
+  notification_preferences jsonb default '{"email": true, "push": true}'::jsonb,
+  last_login timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.profiles
+  add constraint profiles_kyc_status_check
+  check (kyc_status in ('pending', 'verified', 'rejected'));
 
 create trigger set_profiles_updated_at
 before update on public.profiles
@@ -54,11 +62,31 @@ create table if not exists public.traders (
   profit text,
   risk text,
   win_rate text,
+  win_rate_percent numeric(5,2),
+  monthly_return numeric(14,2),
+  max_drawdown numeric(5,2),
+  avg_trade_duration interval,
+  total_volume_managed numeric(14,2) not null default 0,
+  rating numeric(3,2),
   followers integer not null default 0,
   trades integer not null default 0,
   is_active boolean not null default true,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
+
+alter table public.traders
+  add constraint traders_win_rate_percent_check
+  check (win_rate_percent >= 0 and win_rate_percent <= 100);
+
+alter table public.traders
+  add constraint traders_rating_check
+  check (rating >= 0 and rating <= 5);
+
+create trigger set_traders_updated_at
+before update on public.traders
+for each row
+execute function public.set_updated_at();
 
 -- Plans
 create table if not exists public.plans (
@@ -78,12 +106,31 @@ create table if not exists public.copy_trades (
   user_id uuid not null references public.profiles(id) on delete cascade,
   trader_id uuid references public.traders(id) on delete set null,
   amount numeric(14,2) not null,
+  allocated_percentage numeric(5,2) not null default 100,
   current_profit numeric(14,2) not null default 0,
+  fees_paid numeric(14,2) not null default 0,
+  leverage_used numeric(5,2) not null default 1,
+  stop_loss numeric(14,2),
+  take_profit numeric(14,2),
   status text not null default 'active',
   started_at timestamptz not null default now(),
   ended_at timestamptz,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
+
+alter table public.copy_trades
+  add constraint copy_trades_allocated_percentage_check
+  check (allocated_percentage > 0 and allocated_percentage <= 100);
+
+alter table public.copy_trades
+  add constraint copy_trades_leverage_check
+  check (leverage_used > 0 and leverage_used <= 20);
+
+create trigger set_copy_trades_updated_at
+before update on public.copy_trades
+for each row
+execute function public.set_updated_at();
 
 -- Transactions
 create table if not exists public.transactions (
@@ -95,9 +142,15 @@ create table if not exists public.transactions (
   asset text,
   details jsonb,
   status text not null default 'pending',
+  reference_id text,
+  crypto_network text,
+  from_address text,
+  to_address text,
+  conversion_rate numeric(14,8),
   processed_by uuid references public.profiles(id),
   processed_at timestamptz,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 alter table public.transactions
@@ -112,6 +165,15 @@ alter table public.transactions
   add constraint transactions_amount_check
   check (amount > 0);
 
+alter table public.transactions
+  add constraint transactions_conversion_rate_check
+  check (conversion_rate > 0);
+
+create trigger set_transactions_updated_at
+before update on public.transactions
+for each row
+execute function public.set_updated_at();
+
 -- Wallet addresses
 create table if not exists public.wallet_addresses (
   method text primary key,
@@ -123,6 +185,23 @@ create trigger set_wallets_updated_at
 before update on public.wallet_addresses
 for each row
 execute function public.set_updated_at();
+
+-- Activity logs for audit trail
+create table if not exists public.activity_logs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  action text not null,
+  entity_type text not null,
+  entity_id text,
+  changes jsonb,
+  ip_address inet,
+  user_agent text,
+  created_at timestamptz not null default now()
+);
+
+create index idx_activity_logs_user_id on public.activity_logs(user_id);
+create index idx_activity_logs_created_at on public.activity_logs(created_at);
+create index idx_activity_logs_entity on public.activity_logs(entity_type, entity_id);
 
 -- Keep profiles in sync with auth.users
 create or replace function public.handle_new_user()
@@ -186,6 +265,7 @@ alter table public.plans enable row level security;
 alter table public.copy_trades enable row level security;
 alter table public.transactions enable row level security;
 alter table public.wallet_addresses enable row level security;
+alter table public.activity_logs enable row level security;
 
 -- Profiles policies
 create policy profiles_select_own_or_admin
@@ -309,6 +389,23 @@ using (true);
 
 create policy wallet_addresses_admin_all
 on public.wallet_addresses
+for all
+using (public.is_admin())
+with check (public.is_admin());
+
+-- Activity logs policies
+create policy activity_logs_select_own_or_admin
+on public.activity_logs
+for select
+using (user_id = auth.uid() or public.is_admin());
+
+create policy activity_logs_insert_admin
+on public.activity_logs
+for insert
+with check (public.is_admin() or user_id = auth.uid());
+
+create policy activity_logs_admin_all
+on public.activity_logs
 for all
 using (public.is_admin())
 with check (public.is_admin());

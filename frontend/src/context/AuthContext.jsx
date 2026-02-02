@@ -31,6 +31,26 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  const isRecoverableAuthError = (error) => {
+    const message = error?.message || '';
+    return message.includes('postMessage') || message.includes('body stream already read');
+  };
+
+  const recoverSessionUser = async () => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session?.user) return null;
+      const profile = await fetchProfile(sessionData.session.user.id);
+      const mapped = buildUser(profile, sessionData.session.user);
+      setUser(mapped);
+      setIsAuthenticated(true);
+      return mapped;
+    } catch (sessionError) {
+      console.warn('Session recovery failed:', sessionError?.message || sessionError);
+      return null;
+    }
+  };
+
   const fetchProfile = async (userId) => {
     if (!userId) return null;
     const { data, error } = await supabase
@@ -112,6 +132,16 @@ export const AuthProvider = ({ children }) => {
         }
       });
       if (error) {
+        if (isRecoverableAuthError(error)) {
+          const recovered = await recoverSessionUser();
+          if (recovered) {
+            return { success: true, user: recovered };
+          }
+          return {
+            success: false,
+            error: 'Registration completed but the session update failed. Please refresh and log in again.'
+          };
+        }
         return { success: false, error: error.message || 'Registration failed' };
       }
 
@@ -138,18 +168,10 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       return { success: true, user: mapped };
     } catch (error) {
-      if (error?.message?.includes('postMessage')) {
-        try {
-          const { data: sessionData } = await supabase.auth.getSession();
-          if (sessionData?.session?.user) {
-            const profile = await fetchProfile(sessionData.session.user.id);
-            const mapped = buildUser(profile, sessionData.session.user);
-            setUser(mapped);
-            setIsAuthenticated(true);
-            return { success: true, user: mapped };
-          }
-        } catch (sessionError) {
-          console.warn('Session recovery failed:', sessionError?.message || sessionError);
+      if (isRecoverableAuthError(error)) {
+        const recovered = await recoverSessionUser();
+        if (recovered) {
+          return { success: true, user: recovered };
         }
         return {
           success: false,
@@ -170,6 +192,16 @@ export const AuthProvider = ({ children }) => {
         password
       });
       if (error) {
+        if (isRecoverableAuthError(error)) {
+          const recovered = await recoverSessionUser();
+          if (recovered) {
+            return { success: true, user: recovered };
+          }
+          return {
+            success: false,
+            error: 'Login completed but the session update failed. Please refresh and try again.'
+          };
+        }
         return { success: false, error: error.message || 'Login failed' };
       }
 
@@ -188,18 +220,10 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       return { success: true, user: mapped };
     } catch (error) {
-      if (error?.message?.includes('postMessage')) {
-        try {
-          const { data: sessionData } = await supabase.auth.getSession();
-          if (sessionData?.session?.user) {
-            const profile = await fetchProfile(sessionData.session.user.id);
-            const mapped = buildUser(profile, sessionData.session.user);
-            setUser(mapped);
-            setIsAuthenticated(true);
-            return { success: true, user: mapped };
-          }
-        } catch (sessionError) {
-          console.warn('Session recovery failed:', sessionError?.message || sessionError);
+      if (isRecoverableAuthError(error)) {
+        const recovered = await recoverSessionUser();
+        if (recovered) {
+          return { success: true, user: recovered };
         }
         return {
           success: false,

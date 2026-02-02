@@ -89,7 +89,7 @@ const Navbar = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            {['Company', 'Mirror trading', 'Stocks', 'Software', 'Insight'].map((item, index) => (
+            {['Company', 'Mirror trading', 'Stocks', 'Software', 'Insight', 'News'].map((item, index) => (
               <motion.div
                 key={item}
                 whileHover={{ y: -2 }}
