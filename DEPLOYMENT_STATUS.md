@@ -1,1 +1,0 @@
-# MonaCap Trading Platform
