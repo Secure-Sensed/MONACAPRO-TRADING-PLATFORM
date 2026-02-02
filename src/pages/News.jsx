@@ -4,104 +4,104 @@ import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { TrendingUp, TrendingDown, Clock, Share2, Bookmark, Heart, AlertCircle, RefreshCw } from 'lucide-react';
 
+// Simulated real-time news data - in production, connect to real API
+const mockNewsData = [
+  {
+    id: 1,
+    title: 'Federal Reserve Holds Interest Rates Steady, Eyes Inflation Trends',
+    excerpt: 'The Fed maintains its current policy stance as inflation shows signs of stabilization. Market analysts expect rate cuts in Q2 2025.',
+    category: 'Economic',
+    sentiment: 'neutral',
+    timestamp: new Date(Date.now() - 15 * 60000),
+    source: 'Reuters',
+    image: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&h=400',
+    impact: 'High'
+  },
+  {
+    id: 2,
+    title: 'Bitcoin Surges Past $45,000 on Institutional Buying',
+    excerpt: 'Cryptocurrency markets rally as major institutional investors increase exposure. Ethereum follows with 8% gain.',
+    category: 'Cryptocurrency',
+    sentiment: 'bullish',
+    timestamp: new Date(Date.now() - 25 * 60000),
+    source: 'Bloomberg',
+    image: 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=600&h=400',
+    impact: 'High'
+  },
+  {
+    id: 3,
+    title: 'Tech Stocks Rally on AI Innovation Announcements',
+    excerpt: 'Major tech companies announce groundbreaking AI initiatives. Nasdaq composite up 2.1% as investors embrace growth opportunities.',
+    category: 'Stocks',
+    sentiment: 'bullish',
+    timestamp: new Date(Date.now() - 45 * 60000),
+    source: 'CNBC',
+    image: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=600&h=400',
+    impact: 'Medium'
+  },
+  {
+    id: 4,
+    title: 'Oil Markets Volatile Amid Geopolitical Tensions',
+    excerpt: 'Crude prices fluctuate as global supply concerns resurface. OPEC signals potential production adjustments.',
+    category: 'Commodities',
+    sentiment: 'bearish',
+    timestamp: new Date(Date.now() - 60 * 60000),
+    source: 'MarketWatch',
+    image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&h=400',
+    impact: 'Medium'
+  },
+  {
+    id: 5,
+    title: 'Euro Strengthens Against Dollar on Economic Data',
+    excerpt: 'European economic indicators exceed expectations, pushing EUR/USD to 6-month highs.',
+    category: 'Forex',
+    sentiment: 'bullish',
+    timestamp: new Date(Date.now() - 90 * 60000),
+    source: 'Financial Times',
+    image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=600&h=400',
+    impact: 'Medium'
+  },
+  {
+    id: 6,
+    title: 'Trade Negotiations Boost Market Sentiment',
+    excerpt: 'Breakthrough in international trade talks lifts global markets. Stock indices reach new records.',
+    category: 'Economic',
+    sentiment: 'bullish',
+    timestamp: new Date(Date.now() - 120 * 60000),
+    source: 'AP News',
+    image: 'https://images.unsplash.com/photo-1556075798-4825dfaaf498?w=600&h=400',
+    impact: 'High'
+  },
+  {
+    id: 7,
+    title: 'Central Bank Digital Currencies Making Progress',
+    excerpt: 'Multiple countries advance CBDC initiatives. Industry experts predict mainstream adoption by 2026.',
+    category: 'Cryptocurrency',
+    sentiment: 'neutral',
+    timestamp: new Date(Date.now() - 150 * 60000),
+    source: 'CoinDesk',
+    image: 'https://images.unsplash.com/photo-1640361674519-86162ff8020b?w=600&h=400',
+    impact: 'Medium'
+  },
+  {
+    id: 8,
+    title: 'Corporate Earnings Beat Expectations in Q4',
+    excerpt: 'S&P 500 companies deliver strong earnings results. Forward guidance remains optimistic.',
+    category: 'Stocks',
+    sentiment: 'bullish',
+    timestamp: new Date(Date.now() - 180 * 60000),
+    source: 'FactSet',
+    image: 'https://images.unsplash.com/photo-1542783509-3efd6d9c7d5d?w=600&h=400',
+    impact: 'High'
+  }
+];
+
 const News = () => {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [savedArticles, setSavedArticles] = useState([]);
-
-  // Simulated real-time news data - in production, connect to real API
-  const mockNewsData = [
-    {
-      id: 1,
-      title: 'Federal Reserve Holds Interest Rates Steady, Eyes Inflation Trends',
-      excerpt: 'The Fed maintains its current policy stance as inflation shows signs of stabilization. Market analysts expect rate cuts in Q2 2025.',
-      category: 'Economic',
-      sentiment: 'neutral',
-      timestamp: new Date(Date.now() - 15 * 60000),
-      source: 'Reuters',
-      image: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&h=400',
-      impact: 'High'
-    },
-    {
-      id: 2,
-      title: 'Bitcoin Surges Past $45,000 on Institutional Buying',
-      excerpt: 'Cryptocurrency markets rally as major institutional investors increase exposure. Ethereum follows with 8% gain.',
-      category: 'Cryptocurrency',
-      sentiment: 'bullish',
-      timestamp: new Date(Date.now() - 25 * 60000),
-      source: 'Bloomberg',
-      image: 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=600&h=400',
-      impact: 'High'
-    },
-    {
-      id: 3,
-      title: 'Tech Stocks Rally on AI Innovation Announcements',
-      excerpt: 'Major tech companies announce groundbreaking AI initiatives. Nasdaq composite up 2.1% as investors embrace growth opportunities.',
-      category: 'Stocks',
-      sentiment: 'bullish',
-      timestamp: new Date(Date.now() - 45 * 60000),
-      source: 'CNBC',
-      image: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=600&h=400',
-      impact: 'Medium'
-    },
-    {
-      id: 4,
-      title: 'Oil Markets Volatile Amid Geopolitical Tensions',
-      excerpt: 'Crude prices fluctuate as global supply concerns resurface. OPEC signals potential production adjustments.',
-      category: 'Commodities',
-      sentiment: 'bearish',
-      timestamp: new Date(Date.now() - 60 * 60000),
-      source: 'MarketWatch',
-      image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&h=400',
-      impact: 'Medium'
-    },
-    {
-      id: 5,
-      title: 'Euro Strengthens Against Dollar on Economic Data',
-      excerpt: 'European economic indicators exceed expectations, pushing EUR/USD to 6-month highs.',
-      category: 'Forex',
-      sentiment: 'bullish',
-      timestamp: new Date(Date.now() - 90 * 60000),
-      source: 'Financial Times',
-      image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=600&h=400',
-      impact: 'Medium'
-    },
-    {
-      id: 6,
-      title: 'Trade Negotiations Boost Market Sentiment',
-      excerpt: 'Breakthrough in international trade talks lifts global markets. Stock indices reach new records.',
-      category: 'Economic',
-      sentiment: 'bullish',
-      timestamp: new Date(Date.now() - 120 * 60000),
-      source: 'AP News',
-      image: 'https://images.unsplash.com/photo-1556075798-4825dfaaf498?w=600&h=400',
-      impact: 'High'
-    },
-    {
-      id: 7,
-      title: 'Central Bank Digital Currencies Making Progress',
-      excerpt: 'Multiple countries advance CBDC initiatives. Industry experts predict mainstream adoption by 2026.',
-      category: 'Cryptocurrency',
-      sentiment: 'neutral',
-      timestamp: new Date(Date.now() - 150 * 60000),
-      source: 'CoinDesk',
-      image: 'https://images.unsplash.com/photo-1640361674519-86162ff8020b?w=600&h=400',
-      impact: 'Medium'
-    },
-    {
-      id: 8,
-      title: 'Corporate Earnings Beat Expectations in Q4',
-      excerpt: 'S&P 500 companies deliver strong earnings results. Forward guidance remains optimistic.',
-      category: 'Stocks',
-      sentiment: 'bullish',
-      timestamp: new Date(Date.now() - 180 * 60000),
-      source: 'FactSet',
-      image: 'https://images.unsplash.com/photo-1542783509-3efd6d9c7d5d?w=600&h=400',
-      impact: 'High'
-    }
-  ];
 
   useEffect(() => {
     // Simulate loading
