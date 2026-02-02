@@ -37,18 +37,26 @@ export const AuthProvider = ({ children }) => {
   };
 
   const recoverSessionUser = async () => {
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session?.user) return null;
-      const profile = await fetchProfile(sessionData.session.user.id);
-      const mapped = buildUser(profile, sessionData.session.user);
-      setUser(mapped);
-      setIsAuthenticated(true);
-      return mapped;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const { data: sessionData, error } = await supabase.auth.getSession();
+        if (error) {
+          console.warn('Session recovery getSession error:', error.message || error);
+        }
+        if (sessionData?.session?.user) {
+          const profile = await fetchProfile(sessionData.session.user.id);
+          const mapped = buildUser(profile, sessionData.session.user);
+          setUser(mapped);
+          setIsAuthenticated(true);
+          return mapped;
+        }
+        await wait(300 * (attempt + 1)); // backoff: 300ms, 600ms, 900ms
+      }
     } catch (sessionError) {
       console.warn('Session recovery failed:', sessionError?.message || sessionError);
-      return null;
     }
+    return null;
   };
 
   const fetchProfile = async (userId) => {
