@@ -117,7 +117,7 @@ const News = () => {
     }, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [mockNewsData]);
 
   const handleRefresh = () => {
     setLoading(true);
