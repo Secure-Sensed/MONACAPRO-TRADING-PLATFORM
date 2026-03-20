@@ -61,16 +61,24 @@ export const AuthProvider = ({ children }) => {
 
   const fetchProfile = useCallback(async (userId) => {
     if (!userId) return null;
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    if (error) {
-      console.warn('Failed to fetch profile:', error.message || error);
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.warn('Failed to fetch profile:', error.message || error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.warn('Profile lookup threw an exception:', error?.message || error);
       return null;
     }
-    return data;
   }, []);
 
   const applySession = useCallback(async (session) => {
