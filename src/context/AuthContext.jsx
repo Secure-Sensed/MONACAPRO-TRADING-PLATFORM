@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 const AuthContext = createContext();
@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }) => {
     return null;
   };
 
-  const fetchProfile = async (userId) => {
+  const fetchProfile = useCallback(async (userId) => {
     if (!userId) return null;
     const { data, error } = await supabase
       .from('profiles')
@@ -71,7 +71,21 @@ export const AuthProvider = ({ children }) => {
       return null;
     }
     return data;
-  };
+  }, []);
+
+  const applySession = useCallback(async (session) => {
+    if (!session?.user) {
+      setUser(null);
+      setIsAuthenticated(false);
+      return null;
+    }
+
+    const profile = await fetchProfile(session.user.id);
+    const mapped = buildUser(profile, session.user);
+    setUser(mapped);
+    setIsAuthenticated(true);
+    return mapped;
+  }, [fetchProfile]);
 
   const refreshUser = async () => {
     const { data, error } = await supabase.auth.getSession();
@@ -81,11 +95,7 @@ export const AuthProvider = ({ children }) => {
       return null;
     }
 
-    const profile = await fetchProfile(data.session.user.id);
-    const mapped = buildUser(profile, data.session.user);
-    setUser(mapped);
-    setIsAuthenticated(true);
-    return mapped;
+    return applySession(data.session);
   };
 
   useEffect(() => {
@@ -100,35 +110,27 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
         return;
       }
-      const profile = await fetchProfile(data.session.user.id);
-      const mapped = buildUser(profile, data.session.user);
-      setUser(mapped);
-      setIsAuthenticated(true);
+
+      await applySession(data.session);
       setLoading(false);
     };
 
     init();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!isMounted) return;
-      if (!session?.user) {
-        setUser(null);
-        setIsAuthenticated(false);
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      // Supabase warns against awaiting other client calls inside this callback.
+      window.setTimeout(async () => {
+        if (!isMounted) return;
+        await applySession(session);
         setLoading(false);
-        return;
-      }
-      const profile = await fetchProfile(session.user.id);
-      const mapped = buildUser(profile, session.user);
-      setUser(mapped);
-      setIsAuthenticated(true);
-      setLoading(false);
+      }, 0);
     });
 
     return () => {
       isMounted = false;
       authListener?.subscription?.unsubscribe();
     };
-  }, []);
+  }, [applySession]);
 
   const register = async (fullName, email, password) => {
     try {
