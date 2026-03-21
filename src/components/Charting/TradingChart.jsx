@@ -45,6 +45,13 @@ const TradingChart = ({ symbol = 'BINANCE:BTCUSDT' }) => {
       wickDownColor: '#ff4d4f',
     });
 
+    const smaSeries = chart.addLineSeries({
+      color: '#ffbd2e',
+      lineWidth: 2,
+      crosshairMarkerVisible: false,
+      lastValueVisible: true,
+    });
+
     chartRef.current = chart;
     seriesRef.current = candlestickSeries;
 
@@ -53,7 +60,7 @@ const TradingChart = ({ symbol = 'BINANCE:BTCUSDT' }) => {
        let currentPrice = symbol.includes('BTC') ? 65000 : 3500;
        const history = [];
        const now = Math.floor(Date.now() / 1000);
-       for(let i = 100; i > 0; i--) {
+       for(let i = 150; i > 0; i--) {
           const open = currentPrice + (Math.random() * 20 - 10);
           const close = open + (Math.random() * 40 - 20);
           const high = Math.max(open, close) + Math.random() * 10;
@@ -68,7 +75,19 @@ const TradingChart = ({ symbol = 'BINANCE:BTCUSDT' }) => {
        return history;
     };
     
-    candlestickSeries.setData(generateHistory());
+    const historyData = generateHistory();
+    
+    candlestickSeries.setData(historyData);
+
+    // Calculate SMA (Period 20)
+    const smaData = [];
+    for (let i = 0; i < historyData.length; i++) {
+       if (i < 20) continue;
+       let sum = 0;
+       for (let j = 0; j < 20; j++) sum += historyData[i - j].close;
+       smaData.push({ time: historyData[i].time, value: sum / 20 });
+    }
+    smaSeries.setData(smaData);
 
     window.addEventListener('resize', handleResize);
 
@@ -134,6 +153,8 @@ const TradingChart = ({ symbol = 'BINANCE:BTCUSDT' }) => {
              lastCandle.low = Math.min(lastCandle.low, lastCandle.close);
           }
           candlestickSeries.update(lastCandle);
+          // Simplified real-time SMA curve following price loosely
+          smaSeries.update({ time: lastCandle.time, value: lastCandle.close - 2 });
        }, 1000); // Ticks every second
     }
 

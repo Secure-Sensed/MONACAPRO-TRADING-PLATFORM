@@ -11,11 +11,13 @@ const ASSETS = [
 ];
 
 const TradeTerminal = () => {
-  const { currentUser, updateUserBalance } = useAppContext();
+  const { currentUser, updateUserBalance, positions, setPositions } = useAppContext();
   const [activeAsset, setActiveAsset] = useState(ASSETS[0]);
   const [lotSize, setLotSize] = useState(0.1);
   const [leverage, setLeverage] = useState(100);
-  const [positions, setPositions] = useState([]);
+  const [orderType, setOrderType] = useState('MARKET');
+  const [stopLoss, setStopLoss] = useState('');
+  const [takeProfit, setTakeProfit] = useState('');
 
   const handleExecuteOrder = (type) => {
     // Determine margin requirement. Roughly: (Price * Lot * 100,000) / Leverage -> Fake simplified formula
@@ -140,14 +142,22 @@ const TradeTerminal = () => {
 
       {/* RIGHT PANEL: EXECUTION */}
       <aside className="execution-panel">
-         <div className="panel-header">
-            <h3>New Order</h3>
+         <div className="panel-header" style={{display: 'flex', gap: '10px'}}>
+            <button className={`order-tab ${orderType === 'MARKET' ? 'active' : ''}`} onClick={() => setOrderType('MARKET')} style={{flex: 1, padding: '8px', background: orderType === 'MARKET' ? '#1a2744' : 'transparent', color: orderType === 'MARKET' ? '#1fff45' : '#a0a8b1', border: '1px solid #1a2744', borderRadius: '4px', cursor: 'pointer', fontWeight: 600}}>Market</button>
+            <button className={`order-tab ${orderType === 'LIMIT' ? 'active' : ''}`} onClick={() => setOrderType('LIMIT')} style={{flex: 1, padding: '8px', background: orderType === 'LIMIT' ? '#1a2744' : 'transparent', color: orderType === 'LIMIT' ? '#ffbd2e' : '#a0a8b1', border: '1px solid #1a2744', borderRadius: '4px', cursor: 'pointer', fontWeight: 600}}>Limit</button>
          </div>
-         <div className="execution-form">
+         <div className="execution-form" style={{paddingTop: '16px'}}>
             <div className="pair-display text-center">
-              <h1>{activeAsset.symbol}</h1>
-              <p className="text-muted">{activeAsset.name}</p>
+              <h1 style={{fontSize: '24px'}}>{activeAsset.symbol}</h1>
+              <p className="text-muted" style={{fontSize: '12px'}}>{activeAsset.price}</p>
             </div>
+
+            {orderType === 'LIMIT' && (
+              <div className="input-group dark-input-group mt-4">
+                 <label>Limit Price</label>
+                 <input type="text" placeholder={activeAsset.price} className="w-100" style={{background: '#060c18', border: '1px solid #1a2744', color: '#fff', padding: '10px', borderRadius: '4px'}} />
+              </div>
+            )}
 
             <div className="input-group dark-input-group mt-4">
                <label>Volume (Lots)</label>
@@ -156,6 +166,17 @@ const TradeTerminal = () => {
                  <input type="number" step="0.01" value={lotSize} onChange={e => setLotSize(parseFloat(e.target.value))} />
                  <button onClick={() => setLotSize(lotSize + 0.01)}>+</button>
                </div>
+            </div>
+
+            <div style={{display: 'flex', gap: '10px', marginTop: '16px'}}>
+              <div className="input-group dark-input-group" style={{flex: 1}}>
+                 <label style={{fontSize: '12px', color: '#ff4d4f'}}>Stop Loss</label>
+                 <input type="text" placeholder="0.00" value={stopLoss} onChange={(e) => setStopLoss(e.target.value)} style={{background: '#060c18', border: '1px solid #1a2744', color: '#fff', padding: '8px', borderRadius: '4px', width: '100%', fontSize: '14px'}} />
+              </div>
+              <div className="input-group dark-input-group" style={{flex: 1}}>
+                 <label style={{fontSize: '12px', color: '#1fff45'}}>Take Profit</label>
+                 <input type="text" placeholder="0.00" value={takeProfit} onChange={(e) => setTakeProfit(e.target.value)} style={{background: '#060c18', border: '1px solid #1a2744', color: '#fff', padding: '8px', borderRadius: '4px', width: '100%', fontSize: '14px'}} />
+              </div>
             </div>
 
             <div className="input-group dark-input-group mt-4">
@@ -168,13 +189,21 @@ const TradeTerminal = () => {
                <span className="text-white font-medium">${((parseFloat(activeAsset.price.replace(',','')) * lotSize * 100) / leverage).toFixed(2)}</span>
             </div>
 
-            <div className="execution-buttons mt-6">
-               <button className="btn-sell" onClick={() => handleExecuteOrder('SELL')}>
-                 <TrendingDown size={18} /> SELL by Market
-               </button>
-               <button className="btn-buy" onClick={() => handleExecuteOrder('BUY')}>
-                 <TrendingUp size={18} /> BUY by Market
-               </button>
+            <div className="execution-buttons mt-4">
+               {orderType === 'MARKET' ? (
+                 <>
+                   <button className="btn-sell" onClick={() => handleExecuteOrder('SELL')}>
+                     <TrendingDown size={18} /> SELL by Market
+                   </button>
+                   <button className="btn-buy" onClick={() => handleExecuteOrder('BUY')}>
+                     <TrendingUp size={18} /> BUY by Market
+                   </button>
+                 </>
+               ) : (
+                 <button className="btn-buy" onClick={() => handleExecuteOrder('BUY LIMIT')} style={{width: '100%', background: '#ffbd2e'}}>
+                   Place Limit Order
+                 </button>
+               )}
             </div>
             
             <p className="text-muted text-center mt-4" style={{fontSize: '11px'}}>

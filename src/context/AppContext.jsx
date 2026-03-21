@@ -17,6 +17,7 @@ export const AppProvider = ({ children }) => {
 
   // Empty start to allow "First User is Admin" logic to run smoothly
   const [users, setUsers] = useState([]);
+  const [positions, setPositions] = useState([]);
 
   // Actions
   const addTransaction = (tx) => {
@@ -51,7 +52,8 @@ export const AppProvider = ({ children }) => {
       currentUser, setCurrentUser,
       adminWallets, setAdminWallets,
       transactions, addTransaction, approveTransaction, rejectTransaction,
-      users, setUsers, updateUserBalance
+      users, setUsers, updateUserBalance,
+      positions, setPositions
     }}>
       {children}
     </AppContext.Provider>

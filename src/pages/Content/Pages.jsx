@@ -1,24 +1,80 @@
 import React from 'react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
+import FinancialNewsFeed from '../../components/News/FinancialNewsFeed';
+import { motion } from 'framer-motion';
 
-const ContentLayout = ({ title, content }) => (
+const ContentLayout = ({ title, bannerClass, children }) => (
   <div style={{ background: '#0b1120', minHeight: '100vh', color: '#fff' }}>
     <Navbar />
-    <div style={{ maxWidth: '800px', margin: '140px auto 100px', padding: '0 20px', lineHeight: '1.8' }}>
-      <h1 style={{ fontSize: '48px', marginBottom: '24px', fontWeight: '800' }}>{title}</h1>
-      <div style={{ color: '#a0a8b1', fontSize: '18px' }} dangerouslySetInnerHTML={{ __html: content }} />
+    
+    <div style={{
+      padding: '120px 40px 60px 40px',
+      background: 'linear-gradient(135deg, #0f1c34 0%, #060c18 100%)',
+      borderBottom: '1px solid #1a2744'
+    }}>
+       <div className="container" style={{maxWidth: '1200px', margin: '0 auto'}}>
+         <motion.h1 
+           initial={{ opacity: 0, y: 20 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ duration: 0.6 }}
+           style={{ fontSize: '48px', fontWeight: 800 }}
+         >
+           {title}
+         </motion.h1>
+       </div>
     </div>
+
+    <div className="container" style={{ padding: '60px 40px', maxWidth: '1200px', margin: '0 auto' }}>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8, delay: 0.2 }}
+      >
+        {children}
+      </motion.div>
+    </div>
+
     <Footer />
   </div>
 );
 
-export const CompanyPage = () => <ContentLayout title="About Moncaplus Trading" content="<p>Moncaplus Trading was founded with a singular mission: to democratize access to institutional-grade trading tools and insights. Our global team of financial experts and technologists work around the clock to ensure maximum reliability, incredibly tight spreads, and unparalleled order execution.</p><p><br/>With licenses across multiple jurisdictions, we prioritize security and transparency above all else, keeping client funds segregated in tier-1 banks.</p>" />;
+export const CompanyPage = () => (
+  <ContentLayout title="Company Overview">
+     <div style={{ marginBottom: '60px' }}>
+       <h2 style={{fontSize: '24px', marginBottom: '16px'}}>About Moncaplus Trading</h2>
+       <p style={{color: '#a0a8b1', fontSize: '18px', lineHeight: 1.6, maxWidth: '800px'}}>
+         Established to level the playing field for retail and institutional traders globally, Moncaplus Trading provides top-tier liquidity, zero-latency execution, and institutional grade charting software.
+       </p>
+     </div>
+     <FinancialNewsFeed category="company" title="Corporate Announcements" />
+  </ContentLayout>
+);
 
-export const StocksPage = () => <ContentLayout title="Stock Trading" content="<p>Access global equities markets with zero commission on over 3,000 top US, European, and Asian stocks. Buy fractional shares, earn dividends, and utilize our advanced margin system to maximize your market exposure.</p><p><br/>Trade pre-market and after-hours to stay ahead of the curve, utilizing our lightning-fast execution engines to lock in prices precisely when you need them.</p>" />;
+export const StocksPage = () => (
+  <ContentLayout title="Equities & Stocks">
+     <FinancialNewsFeed category="stocks" title="Global Equity Markets Live" />
+  </ContentLayout>
+);
 
-export const MirrorTradingPage = () => <ContentLayout title="Mirror Trading" content="<p>Our award-winning Mirror Trading ecosystem allows you to automatically duplicate the trades of our top-performing algorithmic and human traders. Browse by ROI, risk score, and historical drawdown.</p><p><br/>Join thousands of passive investors who let the experts do the heavy lifting. You maintain 100% control of your funds and can stop mirroring at any time instantly.</p>" />;
+export const MirrorTradingPage = () => (
+  <ContentLayout title="Mirror Trading Terminal">
+     <FinancialNewsFeed category="mirror" title="Algorithmic Strategy Updates" />
+  </ContentLayout>
+);
 
-export const SoftwarePage = () => <ContentLayout title="Trading Software" content="<p>Download our flagship Moncaplus Pro Terminal for Windows and macOS, featuring 120+ technical indicators, automated trading scripts (MQL/Python compatible), and one-click execution from charts.</p><p><br/>Prefer mobile? The Moncaplus App gives you full control of your portfolio on iOS and Android with push notifications for price alerts and executed orders.</p>" />;
+export const SoftwarePage = () => (
+  <ContentLayout title="Trading Software">
+     <div style={{ textAlign: 'center', margin: '40px 0' }}>
+       <h2 style={{fontSize: '32px', marginBottom: '20px'}}>Trade on any device. Anywhere.</h2>
+       <img src="https://moncapluscopytrading.com/assets/exclusive-funded-banner-graphic.svg" alt="Platforms" style={{maxWidth: '600px', width: '100%'}} />
+     </div>
+     <FinancialNewsFeed category="crypto" title="Cryptocurrency Platform Feeds" />
+  </ContentLayout>
+);
 
-export const InsightPage = () => <ContentLayout title="Market Insights" content="<p>Stay informed with our daily technical and fundamental analysis. Our analysts break down the impact of macroeconomic data, central bank announcements, and geopolitical events on FX, Crypto, and Equity markets.</p><p><br/>Check out our weekly webinars and educational academy to sharp your trading strategies.</p>" />
+export const InsightPage = () => (
+  <ContentLayout title="Market Insights & Research">
+     <FinancialNewsFeed category="insight" title="Daily Fundamental Analysis" />
+  </ContentLayout>
+);

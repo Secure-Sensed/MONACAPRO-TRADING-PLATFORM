@@ -3,7 +3,12 @@ import { useAppContext } from '../../context/AppContext';
 import { Wallet, Activity, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
 const UserOverview = () => {
-  const { currentUser, transactions } = useAppContext();
+  const { currentUser, transactions, positions } = useAppContext();
+
+  const totalMarginUsed = positions.reduce((acc, pos) => acc + pos.margin, 0);
+  const totalPnL = positions.reduce((acc, pos) => acc + pos.pnl, 0);
+  const activeEquity = currentUser.balance + totalPnL;
+  const marginLevel = totalMarginUsed === 0 ? "100" : ((activeEquity / totalMarginUsed) * 100).toFixed(2);
   
   const userTx = transactions.filter(t => t.userId === currentUser.id);
 
@@ -25,8 +30,17 @@ const UserOverview = () => {
             <h3>Active Equity</h3>
             <Activity size={24} className="stat-icon blue" />
           </div>
-          <div className="stat-value">$0.00</div>
-          <p className="text-muted" style={{fontSize:'13px'}}>No open trades</p>
+          <p className="stat-value">${activeEquity.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+          <span className="stat-change positive">+${totalPnL.toFixed(2)} (Open PnL)</span>
+        </div>
+        
+        <div className="stat-card">
+          <div className="stat-header">
+            <h3>Margin Level</h3>
+            <Activity size={24} className="stat-icon purple" /> {/* Assuming a different icon or color for Margin Level */}
+          </div>
+          <p className="stat-value">{marginLevel}%</p>
+          <span className="stat-change text-muted">Used Margin: ${totalMarginUsed.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
         </div>
       </div>
 
