@@ -21,6 +21,7 @@ import UserLayout from './pages/Dashboard/UserLayout';
 import UserOverview from './pages/Dashboard/UserOverview';
 import UserDeposit from './pages/Dashboard/UserDeposit';
 import UserProfile from './pages/Dashboard/UserProfile';
+import TradeTerminal from './pages/Dashboard/TradeTerminal';
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
           <Route path="/dashboard" element={<UserLayout />}>
             <Route index element={<UserOverview />} />
             <Route path="deposit" element={<UserDeposit />} />
+            <Route path="trade" element={<TradeTerminal />} />
             <Route path="profile" element={<UserProfile />} />
           </Route>
 
