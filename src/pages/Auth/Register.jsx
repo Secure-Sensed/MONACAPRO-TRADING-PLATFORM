@@ -1,38 +1,66 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, ArrowRight } from 'lucide-react';
-import './Auth.css';
 import { supabase } from '../../lib/supabaseClient';
+import { useAppContext } from '../../context/AppContext';
+import './Auth.css';
 
 const Register = () => {
-  const [fullName, setFullName] = useState('');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { users, setUsers, setCurrentUser } = useAppContext();
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setError(null);
-    
+
+    // SECURITY CHECK: Is this the first user?
+    // If the database has 0 users, this new user gets the 'admin' role.
+    const isFirstUser = users.length === 0;
+    const assignedRole = isFirstUser ? 'admin' : 'user';
+
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: {
-            full_name: fullName,
-          }
-        }
       });
 
-      if (error) {
-        console.log("Supabase error, using mock register:", error.message);
-        navigate('/dashboard'); // Mock success
-      } else {
-        alert("Registration successful! Check your email to verify.");
-        navigate('/login');
+      if (authError) {
+        // Fallback to MOCK mode 
+        console.warn("Supabase not running. Using Mock Database user registration...");
+        const mockUser = { id: Math.random().toString(), name, email, role: assignedRole, balance: 0 };
+        setUsers([...users, mockUser]);
+        setCurrentUser(mockUser);
+        
+        if (assignedRole === 'admin') {
+          alert("🎉 System Initialized! You are the first user and have been granted Administrator credentials.");
+          navigate('/admin');
+        } else {
+          navigate('/dashboard');
+        }
+        return;
       }
+
+      // Supabase Success! Insert into profile table
+      if (data.user) {
+         // Create profile row for real DB
+         await supabase.from('profiles').insert({
+           id: data.user.id,
+           full_name: name,
+           role: assignedRole
+         });
+         
+         if (assignedRole === 'admin') {
+           alert("🎉 System Initialized! You are the first user and have been granted Administrator credentials.");
+           navigate('/admin');
+         } else {
+           navigate('/dashboard');
+         }
+      }
+
     } catch (err) {
       setError(err.message);
     }
@@ -44,8 +72,8 @@ const Register = () => {
         <Link to="/" className="auth-logo">
           <span className="logo-accent">MCT</span> Moncaplus Trading
         </Link>
-        <h2 className="auth-title">Create an Account</h2>
-        <p className="auth-subtitle">Join thousands of traders globally today.</p>
+        <h2 className="auth-title">Create Account</h2>
+        <p className="auth-subtitle">Join thousands of traders globally</p>
 
         {error && <div className="auth-error">{error}</div>}
 
@@ -57,8 +85,8 @@ const Register = () => {
               <input 
                 type="text" 
                 placeholder="John Doe"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 required
               />
             </div>
@@ -84,22 +112,22 @@ const Register = () => {
               <Lock size={18} className="input-icon" />
               <input 
                 type="password" 
-                placeholder="Create a strong password"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={8}
               />
             </div>
           </div>
 
-          <button type="submit" className="btn btn-primary auth-submit mt-4">
+          <button type="submit" className="btn btn-primary auth-submit">
             Create Account <ArrowRight size={18} />
           </button>
         </form>
 
         <p className="auth-footer">
-          Already have an account? <Link to="/login">Sign in</Link>
+          Already have an account? <Link to="/login">Sign In</Link>
         </p>
       </div>
     </div>

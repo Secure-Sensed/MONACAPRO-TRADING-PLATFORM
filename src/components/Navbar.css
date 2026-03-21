@@ -109,3 +109,49 @@
 .btn-register:hover {
   background: #1ccc3a;
 }
+
+.premium-links {
+  display: flex;
+  gap: 20px;
+}
+
+.premium-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #a0a8b1;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 15px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.premium-link:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-2px);
+}
+
+.premium-link .link-icon {
+  color: #2E8BFF;
+  transition: all 0.3s ease;
+}
+
+.premium-link:hover .link-icon {
+  color: #1fff45;
+  transform: scale(1.1);
+}
+
+.premium-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.premium-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(31, 255, 69, 0.3);
+}

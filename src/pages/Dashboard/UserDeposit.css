@@ -124,3 +124,21 @@
     grid-template-columns: 1fr;
   }
 }
+
+.dark-input-group label {
+  display: block;
+  color: #fff;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.dark-input-group input {
+  width: 100%;
+  padding: 12px 16px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #000;
+  font-size: 16px;
+}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Copy, CheckCircle } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import './UserDeposit.css';
 
 const UserDeposit = () => {
@@ -67,10 +68,16 @@ const UserDeposit = () => {
                 {copied ? <CheckCircle size={18} className="text-green" /> : <Copy size={18} />}
               </button>
             </div>
-            {/* Mock QR CODE */}
+            
             <div className="qr-container">
                <div className="mock-qr">
-                  {selectedCurrency.currency} QR CODE
+                  <QRCodeSVG 
+                    value={selectedCurrency.address} 
+                    size={150} 
+                    bgColor={"#ffffff"} 
+                    fgColor={"#000000"} 
+                    level={"Q"} 
+                  />
                </div>
             </div>
           </div>
@@ -78,7 +85,9 @@ const UserDeposit = () => {
 
         <div className="deposit-card">
           <h3>3. Submit Transaction Details</h3>
-          <p className="text-muted">Once you have sent the funds, please provide the exact amount and the Transaction Hash (TxID) below so we can verify your deposit rapidly.</p>
+          <p className="text-muted" style={{lineHeight: '1.6'}}>
+            Once you have sent the funds, please provide the exact amount and the Transaction Hash (TxID) below so we can verify your deposit rapidly.
+          </p>
 
           {success && (
             <div className="success-banner">
@@ -88,7 +97,7 @@ const UserDeposit = () => {
           )}
 
           <form className="deposit-form" onSubmit={handleSubmit}>
-            <div className="input-group">
+            <div className="input-group dark-input-group">
               <label>Amount Sent (USD Equivalent)</label>
               <input 
                 type="number" 
@@ -100,7 +109,7 @@ const UserDeposit = () => {
               />
             </div>
             
-            <div className="input-group">
+            <div className="input-group dark-input-group mt-4">
               <label>Transaction Hash (TxID)</label>
               <input 
                 type="text" 
@@ -111,7 +120,7 @@ const UserDeposit = () => {
               />
             </div>
 
-            <button type="submit" className="btn btn-green w-100 mt-4">Submit for Verification</button>
+            <button type="submit" className="btn btn-green btn-large w-100 mt-6" style={{width: '100%', marginTop: '30px'}}>Submit for Verification</button>
           </form>
         </div>
       </div>

@@ -13,14 +13,10 @@ export const AppProvider = ({ children }) => {
   ]);
 
   // Pending deposits/withdrawals
-  const [transactions, setTransactions] = useState([
-    { id: 101, userId: '1', userEmail: 'user@test.com', type: 'Deposit', amount: 500, currency: 'USDT', status: 'Pending', hash: '0xabc123...', date: new Date().toISOString() }
-  ]);
+  const [transactions, setTransactions] = useState([]);
 
-  const [users, setUsers] = useState([
-    { id: '1', email: 'user@test.com', name: 'John Doe', balance: 0.00, status: 'Active' },
-    { id: '2', email: 'admin@moncaplus.com', name: 'Super Admin', balance: 0.00, status: 'Active', role: 'admin' },
-  ]);
+  // Empty start to allow "First User is Admin" logic to run smoothly
+  const [users, setUsers] = useState([]);
 
   // Actions
   const addTransaction = (tx) => {

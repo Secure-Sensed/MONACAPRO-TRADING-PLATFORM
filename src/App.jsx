@@ -7,6 +7,7 @@ import LandingPage from './pages/LandingPage';
 import { CompanyPage, StocksPage, MirrorTradingPage, SoftwarePage, InsightPage } from './pages/Content/Pages';
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
+import AdminLogin from './pages/Auth/AdminLogin';
 
 // Admin Pages
 import AdminLayout from './pages/Admin/AdminLayout';
@@ -19,6 +20,7 @@ import Settings from './pages/Admin/Settings';
 import UserLayout from './pages/Dashboard/UserLayout';
 import UserOverview from './pages/Dashboard/UserOverview';
 import UserDeposit from './pages/Dashboard/UserDeposit';
+import UserProfile from './pages/Dashboard/UserProfile';
 
 function App() {
   return (
@@ -40,8 +42,10 @@ function App() {
           <Route path="/dashboard" element={<UserLayout />}>
             <Route index element={<UserOverview />} />
             <Route path="deposit" element={<UserDeposit />} />
+            <Route path="profile" element={<UserProfile />} />
           </Route>
 
+          <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<DashboardHome />} />
             <Route path="transactions" element={<AdminTransactions />} />

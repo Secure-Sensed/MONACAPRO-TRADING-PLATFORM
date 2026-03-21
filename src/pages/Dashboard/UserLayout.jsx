@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Wallet, ArrowRightLeft, LogOut } from 'lucide-react';
+import { LayoutDashboard, Wallet, ArrowRightLeft, UserCircle, LogOut } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 import './UserLayout.css';
 
@@ -23,6 +23,9 @@ const UserLayout = () => {
           </NavLink>
           <NavLink to="/dashboard/trade" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
             <ArrowRightLeft size={20} /> Trade Terminal
+          </NavLink>
+          <NavLink to="/dashboard/profile" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+            <UserCircle size={20} /> Account & KYC
           </NavLink>
         </nav>
 

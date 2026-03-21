@@ -1,8 +1,17 @@
-/* Borrows layout styles from AdminLayout.css */
+/* User Layout overrides */
 .balance-pill {
-  background: rgba(31, 255, 69, 0.1);
-  padding: 8px 16px;
+  background: rgba(31, 255, 69, 0.05);
+  padding: 6px 14px;
   border-radius: 20px;
   border: 1px solid rgba(31, 255, 69, 0.2);
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-header .avatar {
+  background: #1fff45;
+  color: #000;
+  font-weight: 800;
+  width: 32px;
+  height: 32px;
 }

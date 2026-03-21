@@ -25,11 +25,7 @@ const Login = () => {
         // Fallback or show error
         console.log("Supabase error, using mock login:", error.message);
         // MOCK LOGIN FOR NOW SO IT ALWAYS WORKS
-        if (email === 'admin@moncaplus.com') {
-          navigate('/admin');
-        } else {
-          navigate('/dashboard');
-        }
+        navigate('/dashboard');
       } else if (data.user) {
         // Real Login Success
         navigate('/dashboard');
