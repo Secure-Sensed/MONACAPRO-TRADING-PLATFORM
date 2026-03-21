@@ -1,0 +1,79 @@
+.page-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 30px;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.stat-card {
+  background: #111a2e;
+  border: 1px solid #1a2744;
+  border-radius: 12px;
+  padding: 24px;
+  transition: transform 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  border-color: #334b82;
+}
+
+.stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.stat-header h3 {
+  font-size: 15px;
+  color: #a0a8b1;
+  font-weight: 500;
+}
+
+.stat-icon {
+  padding: 6px;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+}
+
+.stat-icon.blue { background: rgba(32, 160, 255, 0.1); color: #20a0ff; }
+.stat-icon.green { background: rgba(31, 255, 69, 0.1); color: #1fff45; }
+.stat-icon.purple { background: rgba(168, 85, 247, 0.1); color: #a855f7; }
+
+.stat-value {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.stat-trend {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.stat-trend.positive { color: #1fff45; }
+.stat-trend.negative { color: #ff4d4f; }
+
+.activity-card {
+  background: #111a2e;
+  border: 1px solid #1a2744;
+  border-radius: 12px;
+  padding: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}

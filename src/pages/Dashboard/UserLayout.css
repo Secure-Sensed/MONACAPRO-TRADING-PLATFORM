@@ -1,0 +1,8 @@
+/* Borrows layout styles from AdminLayout.css */
+.balance-pill {
+  background: rgba(31, 255, 69, 0.1);
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(31, 255, 69, 0.2);
+  font-size: 14px;
+}

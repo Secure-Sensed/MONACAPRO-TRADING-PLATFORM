@@ -1,0 +1,110 @@
+.user-management {
+  background: #0b1120;
+}
+
+.header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  background: #111a2e;
+  border: 1px solid #1a2744;
+  border-radius: 8px;
+  padding: 8px 16px;
+  gap: 12px;
+  width: 300px;
+}
+
+.search-bar input {
+  background: transparent;
+  border: none;
+  color: #fff;
+  outline: none;
+  width: 100%;
+  font-family: inherit;
+}
+
+.search-bar input::placeholder {
+  color: #5c6b8c;
+}
+
+.table-container {
+  background: #111a2e;
+  border: 1px solid #1a2744;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.admin-table th {
+  padding: 16px 24px;
+  border-bottom: 1px solid #1a2744;
+  color: #a0a8b1;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.admin-table td {
+  padding: 16px 24px;
+  border-bottom: 1px solid #1a2744;
+  font-size: 15px;
+}
+
+.admin-table tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.text-muted { color: #5c6b8c; }
+.font-medium { font-weight: 500; }
+.text-green { color: #1fff45; font-weight: 600; }
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.status-badge.active { background: rgba(31, 255, 69, 0.1); color: #1fff45; }
+.status-badge.banned { background: rgba(255, 77, 79, 0.1); color: #ff4d4f; }
+.status-badge.pending { background: rgba(255, 189, 46, 0.1); color: #ffbd2e; }
+
+.actions-cell {
+  display: flex;
+  gap: 12px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #1a2744;
+  color: #a0a8b1;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.action-btn.edit:hover { background: #20a0ff; color: #fff; }
+.action-btn.ban:hover { background: #ff4d4f; color: #fff; }

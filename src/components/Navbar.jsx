@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Globe, ChevronDown } from 'lucide-react';
 import './Navbar.css';
 
@@ -22,11 +23,11 @@ const Navbar = () => {
         </div>
 
         <nav className="nav-links">
-          <a href="#company">Company</a>
-          <a href="#mirror-trading">Mirror trading</a>
-          <a href="#stocks">Stocks</a>
-          <a href="#software">Software</a>
-          <a href="#insight">Insight</a>
+          <Link to="/company">Company</Link>
+          <Link to="/mirror-trading">Mirror trading</Link>
+          <Link to="/stocks">Stocks</Link>
+          <Link to="/software">Software</Link>
+          <Link to="/insight">Insight</Link>
         </nav>
 
         <div className="nav-actions">
@@ -34,7 +35,7 @@ const Navbar = () => {
             <img src="https://flagcdn.com/w20/gb.png" alt="English" className="flag-icon" />
             English <ChevronDown size={14} />
           </button>
-          <button className="btn btn-register">Registration</button>
+          <Link to="/register" className="btn btn-register" style={{textDecoration: 'none'}}>Registration</Link>
         </div>
 
       </div>

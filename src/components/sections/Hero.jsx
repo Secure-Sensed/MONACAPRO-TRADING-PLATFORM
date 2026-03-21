@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import './Hero.css';
 
 const Hero = () => {
@@ -25,8 +26,8 @@ const Hero = () => {
           </div>
           
           <div className="hero-cta">
-            <button className="btn btn-green">Register</button>
-            <button className="btn btn-white">Login</button>
+            <Link to="/register" className="btn btn-green" style={{textDecoration: 'none'}}>Register</Link>
+            <Link to="/login" className="btn btn-white" style={{textDecoration: 'none'}}>Login</Link>
           </div>
         </div>
 
