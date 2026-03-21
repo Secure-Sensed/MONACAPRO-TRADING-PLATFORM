@@ -1,0 +1,71 @@
+.trade-anywhere {
+  background: #1fff45;
+  width: 100%;
+  height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  margin-top: 50px;
+}
+
+.ta-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  max-width: 1400px;
+}
+
+.ta-text {
+  font-size: clamp(80px, 12vw, 180px);
+  font-weight: 900;
+  color: #fff;
+  text-transform: uppercase;
+  line-height: 1;
+  letter-spacing: -2px;
+  z-index: 5;
+  margin: 0;
+  padding: 0 20px;
+}
+
+.ta-text-left {
+  text-align: right;
+  z-index: 5;
+}
+
+.ta-text-right {
+  text-align: left;
+  z-index: 10; /* This overlaps the man in the original design maybe, or under? The man is over ANYWHERE */
+}
+
+.ta-image-wrapper {
+  position: absolute;
+  left: 50%;
+  bottom: -250px;
+  transform: translateX(-50%);
+  z-index: 20;
+}
+
+.ta-man {
+  height: 600px;
+  width: auto;
+  object-fit: cover;
+}
+
+@media (max-width: 900px) {
+  .ta-banner {
+    flex-direction: column;
+  }
+  .trade-anywhere {
+    height: 500px;
+  }
+  .ta-image-wrapper {
+    bottom: -150px;
+  }
+  .ta-man {
+    height: 400px;
+  }
+}

@@ -1,0 +1,128 @@
+.hero {
+  background: #060c18;
+  padding-top: 15vh;
+  padding-bottom: 120px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Background diagonal shape from the screenshot */
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -20%;
+  width: 70%;
+  height: 150%;
+  background: linear-gradient(135deg, #0f1c34 0%, #060c18 100%);
+  transform: rotate(-15deg);
+  z-index: 0;
+}
+
+.hero-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 10;
+  max-width: 1300px;
+}
+
+.hero-content {
+  max-width: 600px;
+}
+
+.hero-title {
+  font-size: 52px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: #fff;
+  margin-bottom: 24px;
+}
+
+.text-blue {
+  color: #4bb3f9;
+}
+
+.hero-subtitle {
+  font-size: 18px;
+  color: #a0a8b1;
+  line-height: 1.6;
+  margin-bottom: 32px;
+  max-width: 540px;
+}
+
+.hero-assets {
+  display: flex;
+  align-items: center;
+  gap: -5px; /* overlap */
+  margin-bottom: 40px;
+}
+
+.asset-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+  border: 2px solid #060c18;
+}
+
+.asset-circle.fb { background: #20a0ff; }
+.asset-circle.mc { background: #253345; }
+.asset-circle.tsla { background: #f22938; }
+.asset-circle.gg { background: #253345; }
+.asset-circle.aapl { background: #000000; }
+
+.asset-circle img {
+  width: 20px;
+  height: 20px;
+}
+
+.asset-pill {
+  background: #1a2539;
+  color: #fff;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+.hero-cta {
+  display: flex;
+  gap: 16px;
+}
+
+.btn {
+  padding: 12px 32px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-green {
+  background: #1fff45;
+  color: #fff;
+}
+
+.btn-white {
+  background: #fff;
+  color: #4bb3f9;
+}
+
+.hero-image {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.hero-image img {
+  max-width: 100%;
+  width: 550px;
+  height: auto;
+}

@@ -1,0 +1,71 @@
+.experience-grid {
+  background: #ffffff;
+  padding: 80px 0;
+  color: #a0a8b1;
+}
+
+.eg-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 40px;
+  max-width: 1400px;
+  align-items: start;
+}
+
+.eg-text {
+  font-size: 16px;
+  line-height: 1.8;
+  font-weight: 500;
+  margin-top: 40px;
+}
+
+.eg-column-middle {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.eg-column-middle img {
+  width: 100%;
+  max-width: 350px;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+}
+
+.eg-column-right {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.eg-card {
+  padding: 40px;
+  border-radius: 20px;
+  color: #fff;
+  line-height: 1.6;
+}
+
+.eg-card h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.eg-card p {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.eg-card-darkgreen {
+  background: #50cc68;
+}
+
+.eg-card-lightgreen {
+  background: #75e88a;
+}
+
+@media (max-width: 1100px) {
+  .eg-container {
+    grid-template-columns: 1fr;
+  }
+}

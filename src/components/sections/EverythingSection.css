@@ -1,0 +1,56 @@
+.everything-section {
+  background: #ffffff;
+  padding: 100px 0;
+}
+
+.es-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 60px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.es-content {
+  flex: 1;
+  max-width: 550px;
+}
+
+.es-title {
+  font-size: 52px;
+  font-weight: 800;
+  color: #a0a8b1; /* Light grey header as seen in screenshot */
+  margin-bottom: 30px;
+  line-height: 1.1;
+  letter-spacing: -1px;
+}
+
+.es-body {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #a0a8b1;
+  font-weight: 500;
+}
+
+.es-image {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+.es-image img {
+  width: 100%;
+  max-width: 500px;
+  height: auto;
+}
+
+@media (max-width: 900px) {
+  .es-container {
+    flex-direction: column;
+  }
+  .es-title {
+    font-size: 40px;
+  }
+}

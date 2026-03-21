@@ -1,0 +1,237 @@
+.product-showcase {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.py-16 {
+  padding-top: 4rem;
+  padding-bottom: 4rem;
+}
+
+.showcase-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+.section-title {
+  font-size: clamp(2.5rem, 4vw, 3.5rem);
+  line-height: 1.2;
+  font-weight: 800;
+  color: var(--color-text);
+  letter-spacing: -0.5px;
+}
+
+.section-subtitle {
+  font-size: 1.15rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  max-width: 500px;
+}
+
+.showcase-benefits {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.showcase-benefits li {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.benefit-icon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+
+.showcase-benefits h4 {
+  font-size: 1.1rem;
+  color: var(--color-text);
+  margin-bottom: 0.25rem;
+}
+
+.showcase-visual {
+  position: relative;
+}
+
+.mockup-container {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  position: relative;
+  z-index: 10;
+}
+
+.mockup-header {
+  height: 36px;
+  background: var(--glass-border);
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+}
+
+.mac-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.mac-buttons span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.mac-buttons span:nth-child(1) { background: #ff5f56; }
+.mac-buttons span:nth-child(2) { background: #ffbd2e; }
+.mac-buttons span:nth-child(3) { background: #27c93f; }
+
+.mockup-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.mockup-body {
+  height: 400px;
+  background: var(--color-bg-light);
+  padding: 1rem;
+}
+
+/* Artificial CSS Chart Graphic */
+.chart-wrapper {
+  display: flex;
+  height: 100%;
+  gap: 1rem;
+}
+
+.chart-sidebar {
+  width: 60px;
+  border-right: 1px solid var(--glass-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-right: 1rem;
+}
+
+.chart-item {
+  height: 40px;
+  background: var(--glass-border);
+  border-radius: 4px;
+}
+
+.chart-main {
+  flex-grow: 1;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.chart-candles {
+  display: flex;
+  gap: 1.5rem;
+  width: 100%;
+  height: 80%;
+  align-items: flex-end;
+}
+
+.candle {
+  width: 12px;
+  border-radius: 2px;
+  position: relative;
+}
+
+.candle::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  background: inherit;
+  top: -15px;
+  bottom: -15px;
+  opacity: 0.5;
+}
+
+.up { background: var(--color-accent); }
+.down { background: #ff3366; }
+
+.h-1 { height: 30%; }
+.h-2 { height: 20%; align-self: center;}
+.h-3 { height: 40%; }
+.h-4 { height: 60%; }
+.h-5 { height: 40%; align-self: flex-start;}
+.h-6 { height: 50%; }
+.h-7 { height: 80%; }
+.h-8 { height: 60%; align-self: center;}
+.h-9 { height: 100%; }
+
+.mockup-floating {
+  position: absolute;
+  bottom: -20px;
+  left: -20px;
+  padding: 1.5rem;
+  border-radius: 12px;
+  z-index: 20;
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-15px); }
+  100% { transform: translateY(0px); }
+}
+
+.floating-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-accent);
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.text-accent {
+  color: var(--color-accent);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .showcase-grid {
+    grid-template-columns: 1fr;
+  }
+  .showcase-visual {
+    margin-top: 3rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .mockup-body {
+    height: 300px;
+  }
+  .mockup-floating {
+    left: 10px;
+    bottom: -10px;
+    padding: 1rem;
+  }
+  .stat-value {
+    font-size: 1.5rem;
+  }
+}

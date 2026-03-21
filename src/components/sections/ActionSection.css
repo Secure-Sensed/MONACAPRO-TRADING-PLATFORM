@@ -1,0 +1,74 @@
+.action-section {
+  background: #ffffff;
+  padding: 40px 0;
+}
+
+.action-card {
+  background: #0f1c34;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 60px 80px;
+  position: relative;
+  overflow: hidden;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Diagonal gradient BG in screenshot */
+.action-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -30%;
+  width: 70%;
+  height: 200%;
+  background: linear-gradient(135deg, #182848 0%, #0f1c34 100%);
+  transform: rotate(-20deg);
+  z-index: 0;
+}
+
+.action-content {
+  position: relative;
+  z-index: 10;
+  flex: 1;
+  max-width: 600px;
+}
+
+.action-title {
+  color: #fff;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  margin-bottom: 24px;
+  line-height: 1.4;
+}
+
+.action-body {
+  color: #a0a8b1;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.action-image {
+  position: relative;
+  z-index: 10;
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.action-image img {
+  width: 100%;
+  max-width: 350px;
+  height: auto;
+}
+
+@media (max-width: 900px) {
+  .action-card {
+    flex-direction: column;
+    padding: 40px;
+    gap: 40px;
+  }
+}

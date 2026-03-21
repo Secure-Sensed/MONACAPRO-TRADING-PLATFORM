@@ -1,0 +1,61 @@
+.copy-trading {
+  background: #ffffff;
+  padding: 100px 0;
+  color: #333;
+}
+
+.ct-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 60px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.ct-content {
+  flex: 1;
+  max-width: 550px;
+}
+
+.ct-title {
+  font-size: 42px;
+  font-weight: 800;
+  color: #111;
+  margin-bottom: 30px;
+  letter-spacing: -0.5px;
+}
+
+.ct-body {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #666;
+  font-weight: 500;
+}
+
+.mt-4 {
+  margin-top: 24px;
+}
+
+.mt-8 {
+  margin-top: 40px;
+}
+
+.ct-image {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.ct-image img,
+.ct-image video {
+  width: 100%;
+  max-width: 500px;
+  height: auto;
+}
+
+@media (max-width: 900px) {
+  .ct-container {
+    flex-direction: column;
+  }
+}
