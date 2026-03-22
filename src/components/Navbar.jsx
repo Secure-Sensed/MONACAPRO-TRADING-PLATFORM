@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, Building2, TrendingUp, Copy, MonitorPlay, Lightbulb } from 'lucide-react';
+import { ChevronDown, Building2, TrendingUp, Copy, MonitorPlay, Lightbulb, Menu, X } from 'lucide-react';
 import './Navbar.css';
 
 const Navbar = () => {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   return (
     <header className="navbar">
       <div className="container nav-container">
@@ -22,8 +24,12 @@ const Navbar = () => {
           </div>
         </div>
 
-        <nav className="nav-links premium-links">
-          <Link to="/company" className="premium-link">
+        <button className="mobile-menu-btn" onClick={() => setMobileOpen(!mobileOpen)}>
+          {mobileOpen ? <X size={28} color="#fff" /> : <Menu size={28} color="#fff" />}
+        </button>
+
+        <nav className={`nav-links premium-links ${mobileOpen ? 'open' : ''}`}>
+          <Link to="/company" className="premium-link" onClick={() => setMobileOpen(false)}>
             <Building2 size={18} className="link-icon" /> <span>Company</span>
           </Link>
           <Link to="/mirror-trading" className="premium-link">

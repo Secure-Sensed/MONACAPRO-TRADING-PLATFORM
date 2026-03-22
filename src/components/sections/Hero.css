@@ -142,3 +142,46 @@
 .btn-green.premium-cta-btn:hover {
   box-shadow: 0 8px 20px rgba(31, 255, 69, 0.3);
 }
+
+@media (max-width: 900px) {
+  .hero-container {
+    flex-direction: column;
+    text-align: center;
+    padding: 0 20px;
+  }
+
+  .hero-title {
+    font-size: 38px;
+    margin-top: 40px;
+  }
+
+  .hero-subtitle {
+    font-size: 16px;
+    margin: 0 auto 30px auto;
+  }
+
+  .hero-assets {
+    justify-content: center;
+    margin-bottom: 30px;
+  }
+
+  .hero-cta {
+    justify-content: center;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .hero-cta .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .hero-image {
+    margin-top: 50px;
+    justify-content: center;
+  }
+
+  .hero::before {
+    display: none;
+  }
+}

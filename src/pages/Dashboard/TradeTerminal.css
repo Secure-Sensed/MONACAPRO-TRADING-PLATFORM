@@ -295,3 +295,34 @@
 
 .btn-sell { background: #ff4d4f; }
 .btn-buy { background: #1fff45; color: #000 !important; }
+
+@media (max-width: 900px) {
+  .trade-terminal {
+    flex-direction: column;
+    height: auto;
+    margin: -20px;
+  }
+
+  .assets-panel {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #1a2744;
+    height: 300px;
+  }
+
+  .execution-panel {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid #1a2744;
+  }
+
+  .chart-panel {
+    min-height: 500px;
+  }
+
+  .terminal-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
