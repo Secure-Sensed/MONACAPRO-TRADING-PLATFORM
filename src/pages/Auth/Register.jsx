@@ -17,12 +17,23 @@ const Register = () => {
     e.preventDefault();
     setError(null);
 
-    // SECURITY CHECK: Is this the first user?
-    // If the database has 0 users, this new user gets the 'admin' role.
-    const isFirstUser = users.length === 0;
-    const assignedRole = isFirstUser ? 'admin' : 'user';
-
     try {
+      // SECURITY UPGRADE: Query the actual LIVE Supabase database to see if anyone exists yet.
+      // This prevents a page-refresh from tricking the system into making multiple admins.
+      const { count, error: countError } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true });
+
+      let assignedRole = 'user';
+      
+      // If Supabase is connected and there are exactly 0 users, this new user becomes the Admin.
+      if (!countError && count === 0) {
+          assignedRole = 'admin';
+      } else if (countError) {
+          // If Supabase isn't hooked up yet, fallback to the local React state mock
+          assignedRole = users.length === 0 ? 'admin' : 'user';
+      }
+
       const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
