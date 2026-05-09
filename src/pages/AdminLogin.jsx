@@ -117,11 +117,10 @@ const AdminLogin = () => {
           </form>
 
           <div className="mt-6 p-4 bg-cyan-400/10 border border-cyan-400/30 rounded-lg">
-            <p className="text-cyan-400 text-sm font-semibold mb-2">Admin Credentials:</p>
-            <div className="space-y-1">
-              <p className="text-gray-400 text-xs">Username: admin | Password: admin0123</p>
-              <p className="text-gray-400 text-xs">Username: addmin | Password: admin0123</p>
-            </div>
+            <p className="text-cyan-400 text-sm font-semibold mb-2">Restricted Area</p>
+            <p className="text-gray-400 text-xs">
+              Admin accounts must be created in Supabase Auth and granted the admin role in the profiles table.
+            </p>
           </div>
         </CardContent>
       </Card>

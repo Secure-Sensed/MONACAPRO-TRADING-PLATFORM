@@ -8,6 +8,8 @@ A modern, full-stack trading platform built with React, Supabase, and Tailwind C
 - **Copy Trading** - Mirror successful traders' strategies
 - **Multi-Asset Support** - Forex, Crypto, Stocks, Indices, Commodities
 - **Secure Authentication** - Supabase Auth with email/password
+- **Admin-managed Funding** - Admin-controlled deposit accounts and transaction approval workflow
+- **Realtime Account Updates** - Supabase Realtime subscriptions for balances, transactions, and funding methods
 - **Responsive Design** - Mobile-first design with Tailwind CSS
 - **Multi-language Support** - i18next integration
 - **Admin Dashboard** - Comprehensive admin panel
@@ -68,6 +70,8 @@ Required environment variables:
 - `REACT_APP_SUPABASE_URL` - Your Supabase project URL
 - `REACT_APP_SUPABASE_ANON_KEY` - Your Supabase anonymous key
 - `REACT_APP_FMP_API_KEY` - Financial Modeling Prep API key (optional)
+
+Run `supabase/schema.sql` for a fresh Supabase project, or `supabase/migrations.sql` for an existing project. Deposit accounts are managed from `Admin Dashboard -> Deposit Accounts`.
 
 4. **Start development server**
 ```bash

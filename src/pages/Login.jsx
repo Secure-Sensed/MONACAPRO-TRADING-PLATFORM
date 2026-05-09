@@ -152,10 +152,7 @@ const Login = () => {
 
             <div className="mt-4 p-3 bg-blue-400/10 border border-blue-400/30 rounded-lg">
               <p className="text-blue-400 text-xs text-center">
-                💡 Admin users can login here using their credentials
-              </p>
-              <p className="text-gray-400 text-xs text-center mt-1">
-                (admin@monacaptradingpro.com or addmin@monacaptradingpro.com)
+                Admin users can sign in with their assigned Supabase credentials.
               </p>
             </div>
           </CardContent>

@@ -6,11 +6,16 @@ Create a new Supabase project and open the SQL editor.
 ## 2) Run schema
 Run `supabase/schema.sql` first (enables extensions, tables, RLS, RPCs, triggers).
 
+For an existing project that already has the original tables, run `supabase/migrations.sql`
+instead so data is preserved while realtime policies and funding workflow changes are applied.
+
 ## 3) Seed (optional)
 Run `supabase/seed.sql` to load default traders, plans, and wallet addresses.
+Replace the seeded wallet/bank values from **Admin Dashboard -> Deposit Accounts** before
+accepting real user deposit requests.
 
 ## 4) Frontend env
-Create `frontend/.env.local` with:
+Create `.env.local` at the repo root with:
 ```
 REACT_APP_SUPABASE_URL=your_supabase_project_url
 REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
@@ -23,7 +28,12 @@ After creating an admin account, run:
 update public.profiles set role = 'admin' where email = 'admin@monacaptradingpro.com';
 ```
 
-## 6) Auth emails (signup + login notifications)
+## 6) Realtime data
+The schema/migration adds `profiles`, `transactions`, `wallet_addresses`, `copy_trades`,
+`traders`, and `plans` to the `supabase_realtime` publication. If realtime events still do
+not arrive, confirm those tables are enabled in Supabase Dashboard -> Database -> Replication.
+
+## 7) Auth emails (signup + login notifications)
 Supabase will send **email confirmation** by default for new signups.
 For additional **welcome + login notifications**, deploy the Edge Function:
 
@@ -43,7 +53,7 @@ supabase functions deploy send-auth-email
 
 The frontend calls this function automatically after signup/login.
 
-## 7) Data migration (existing Postgres)
+## 8) Data migration (existing Postgres)
 If you already have data in the old database:
 
 - Tables you can migrate directly: `traders`, `plans`, `wallet_addresses`, `transactions`, `copy_trades`.

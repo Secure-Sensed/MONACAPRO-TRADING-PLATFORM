@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 const AuthContext = createContext();
@@ -31,12 +31,26 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const isRecoverableAuthError = (error) => {
+  const isRecoverableAuthError = useCallback((error) => {
     const message = error?.message || '';
     return message.includes('postMessage') || message.includes('body stream already read');
-  };
+  }, []);
 
-  const recoverSessionUser = async () => {
+  const fetchProfile = useCallback(async (userId) => {
+    if (!userId) return null;
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    if (error) {
+      console.warn('Failed to fetch profile:', error.message || error);
+      return null;
+    }
+    return data;
+  }, []);
+
+  const recoverSessionUser = useCallback(async () => {
     const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     try {
       for (let attempt = 0; attempt < 3; attempt++) {
@@ -57,23 +71,9 @@ export const AuthProvider = ({ children }) => {
       console.warn('Session recovery failed:', sessionError?.message || sessionError);
     }
     return null;
-  };
+  }, [fetchProfile]);
 
-  const fetchProfile = async (userId) => {
-    if (!userId) return null;
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    if (error) {
-      console.warn('Failed to fetch profile:', error.message || error);
-      return null;
-    }
-    return data;
-  };
-
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     const { data, error } = await supabase.auth.getSession();
     if (error || !data?.session?.user) {
       setUser(null);
@@ -86,7 +86,7 @@ export const AuthProvider = ({ children }) => {
     setUser(mapped);
     setIsAuthenticated(true);
     return mapped;
-  };
+  }, [fetchProfile]);
 
   useEffect(() => {
     let isMounted = true;
@@ -128,9 +128,38 @@ export const AuthProvider = ({ children }) => {
       isMounted = false;
       authListener?.subscription?.unsubscribe();
     };
-  }, []);
+  }, [fetchProfile]);
 
-  const register = async (fullName, email, password) => {
+  useEffect(() => {
+    if (!user?.user_id) return undefined;
+
+    const channel = supabase
+      .channel(`profile:${user.user_id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${user.user_id}`
+        },
+        (payload) => {
+          if (payload.eventType === 'DELETE') {
+            setUser(null);
+            setIsAuthenticated(false);
+            return;
+          }
+          refreshUser();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refreshUser, user?.user_id]);
+
+  const register = useCallback(async (fullName, email, password) => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -191,9 +220,9 @@ export const AuthProvider = ({ children }) => {
         error: error?.message || 'Registration failed'
       };
     }
-  };
+  }, [fetchProfile, isRecoverableAuthError, recoverSessionUser]);
 
-  const login = async (email, password) => {
+  const login = useCallback(async (email, password) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -243,9 +272,9 @@ export const AuthProvider = ({ children }) => {
         error: error?.message || 'Login failed'
       };
     }
-  };
+  }, [fetchProfile, isRecoverableAuthError, recoverSessionUser]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await supabase.auth.signOut();
     } catch (error) {
@@ -254,9 +283,9 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       setIsAuthenticated(false);
     }
-  };
+  }, []);
 
-  const value = {
+  const value = useMemo(() => ({
     user,
     loading,
     isAuthenticated,
@@ -264,7 +293,7 @@ export const AuthProvider = ({ children }) => {
     register,
     login,
     logout
-  };
+  }), [isAuthenticated, loading, login, logout, refreshUser, register, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
