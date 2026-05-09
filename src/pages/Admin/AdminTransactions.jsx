@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { CheckCircle, RefreshCw, XCircle } from 'lucide-react';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase, supabaseConfigError } from '../../lib/supabaseClient';
 
 const parseNumber = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -17,6 +17,10 @@ const AdminTransactions = () => {
     setError('');
 
     try {
+      if (!supabase) {
+        throw new Error(supabaseConfigError);
+      }
+
       const { data, error: fetchError } = await supabase
         .from('transactions')
         .select('*, profile:profiles(full_name, email)')
@@ -38,6 +42,10 @@ const AdminTransactions = () => {
 
   const handleApprove = async (transactionId) => {
     try {
+      if (!supabase) {
+        throw new Error(supabaseConfigError);
+      }
+
       const { error: approveError } = await supabase.rpc('approve_transaction', { transaction_id: transactionId });
       if (approveError) throw approveError;
       await fetchTransactions();
@@ -50,6 +58,10 @@ const AdminTransactions = () => {
     if (!window.confirm('Reject this transaction?')) return;
 
     try {
+      if (!supabase) {
+        throw new Error(supabaseConfigError);
+      }
+
       const { error: rejectError } = await supabase.rpc('reject_transaction', { transaction_id: transactionId });
       if (rejectError) throw rejectError;
       await fetchTransactions();

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, ArrowRight } from 'lucide-react';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase, supabaseConfigError } from '../../lib/supabaseClient';
 import { useAppContext } from '../../context/AppContext';
 import './Auth.css';
 
@@ -18,6 +18,10 @@ const Register = () => {
     setError(null);
 
     try {
+      if (!supabase) {
+        throw new Error(supabaseConfigError);
+      }
+
       // SECURITY UPGRADE: Query the actual LIVE Supabase database to see if anyone exists yet.
       // This prevents a page-refresh from tricking the system into making multiple admins.
       const { count, error: countError } = await supabase

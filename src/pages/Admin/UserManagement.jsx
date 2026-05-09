@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Ban, Edit, RefreshCw, Search, ShieldCheck } from 'lucide-react';
 import './UserManagement.css';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase, supabaseConfigError } from '../../lib/supabaseClient';
 
 const parseNumber = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -26,6 +26,10 @@ const UserManagement = () => {
     setError('');
 
     try {
+      if (!supabase) {
+        throw new Error(supabaseConfigError);
+      }
+
       const syncResult = await supabase.rpc('sync_auth_users_to_profiles');
       if (syncResult.error) {
         console.warn('Profile sync skipped:', syncResult.error.message || syncResult.error);
@@ -67,6 +71,10 @@ const UserManagement = () => {
   }, [search, users]);
 
   const updateUserProfile = async (user, patch) => {
+    if (!supabase) {
+      throw new Error(supabaseConfigError);
+    }
+
     const payload = {
       id: user.user_id,
       email: user.email || '',

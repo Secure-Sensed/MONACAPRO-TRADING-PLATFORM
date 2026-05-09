@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Plus, RefreshCw, Trash2 } from 'lucide-react';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase, supabaseConfigError } from '../../lib/supabaseClient';
 
 const formatMethod = (method = '') => method.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 
@@ -17,6 +17,10 @@ const Settings = () => {
     setError('');
 
     try {
+      if (!supabase) {
+        throw new Error(supabaseConfigError);
+      }
+
       const { data, error: fetchError } = await supabase
         .from('wallet_addresses')
         .select('method, address, updated_at')
@@ -45,6 +49,10 @@ const Settings = () => {
       : address.trim();
 
     try {
+      if (!supabase) {
+        throw new Error(supabaseConfigError);
+      }
+
       const { error: upsertError } = await supabase
         .from('wallet_addresses')
         .upsert({ method: normalizedMethod, address: walletPayload, updated_at: new Date().toISOString() }, { onConflict: 'method' });
@@ -63,6 +71,10 @@ const Settings = () => {
     if (!window.confirm(`Remove ${formatMethod(walletMethod)} from user deposit options?`)) return;
 
     try {
+      if (!supabase) {
+        throw new Error(supabaseConfigError);
+      }
+
       const { error: deleteError } = await supabase
         .from('wallet_addresses')
         .delete()

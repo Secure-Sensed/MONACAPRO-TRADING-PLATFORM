@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
 import './Auth.css';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase, supabaseConfigError } from '../../lib/supabaseClient';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -16,6 +16,10 @@ const Login = () => {
     
     // Attempt Supabase login if configured
     try {
+      if (!supabase) {
+        throw new Error(supabaseConfigError);
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,

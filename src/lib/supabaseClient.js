@@ -1,7 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 
-// These should be replaced by actual environment variables (.env)
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://placeholder-project.supabase.co';
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || 'placeholder-anon-key';
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabaseConfigError = !supabaseUrl || !supabaseAnonKey
+  ? 'Supabase is not configured. Add REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY in Vercel, then redeploy.'
+  : '';
+
+export const supabase = supabaseConfigError
+  ? null
+  : createClient(supabaseUrl, supabaseAnonKey);

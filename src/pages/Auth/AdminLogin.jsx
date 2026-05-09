@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Lock, ArrowRight } from 'lucide-react';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase, supabaseConfigError } from '../../lib/supabaseClient';
 import './Auth.css'; // Reusing standard auth styles
 
 const AdminLogin = () => {
@@ -15,6 +15,10 @@ const AdminLogin = () => {
     setError(null);
     
     try {
+      if (!supabase) {
+        throw new Error(supabaseConfigError);
+      }
+
       // Authenticate with Supabase
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
