@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Shield, Lock, ArrowRight } from 'lucide-react';
 import { supabase, supabaseConfigError } from '../../lib/supabaseClient';
 import './Auth.css'; // Reusing standard auth styles
@@ -9,6 +9,7 @@ const AdminLogin = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleAdminLogin = async (e) => {
     e.preventDefault();
@@ -40,7 +41,7 @@ const AdminLogin = () => {
       }
 
       // Success
-      navigate('/admin');
+      navigate(location.state?.from || '/admin', { replace: true });
 
     } catch (err) {
       setError(err.message || "Invalid Admin Credentials");
@@ -64,7 +65,7 @@ const AdminLogin = () => {
             <div className="input-wrapper">
               <input 
                 type="email" 
-                placeholder="admin@moncaplus.com"
+                placeholder="drjaxsoncopper@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required

@@ -1,9 +1,103 @@
-import React from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Users, Settings, Wallet, LogOut } from 'lucide-react';
+import { supabase, supabaseConfigError } from '../../lib/supabaseClient';
 import './AdminLayout.css';
 
 const AdminLayout = () => {
+  const [adminUser, setAdminUser] = useState(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [authError, setAuthError] = useState('');
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const verifyAdminSession = async () => {
+      setIsCheckingAuth(true);
+      setAuthError('');
+
+      try {
+        if (!supabase) {
+          throw new Error(supabaseConfigError);
+        }
+
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+
+        const user = sessionData.session?.user;
+        if (!user) {
+          navigate('/admin/login', { replace: true, state: { from: location.pathname } });
+          return;
+        }
+
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role, full_name, email')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError || profile?.role !== 'admin') {
+          await supabase.auth.signOut();
+          navigate('/admin/login', { replace: true, state: { from: location.pathname } });
+          return;
+        }
+
+        if (isMounted) {
+          setAdminUser({
+            email: profile.email || user.email,
+            name: profile.full_name || profile.email || user.email
+          });
+        }
+      } catch (err) {
+        if (isMounted) {
+          setAuthError(err.message || 'Unable to verify administrator access.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsCheckingAuth(false);
+        }
+      }
+    };
+
+    verifyAdminSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [location.pathname, navigate]);
+
+  const handleSignOut = async () => {
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
+    navigate('/admin/login', { replace: true });
+  };
+
+  if (isCheckingAuth) {
+    return (
+      <div className="admin-auth-state">
+        <div className="admin-auth-panel">
+          <div className="admin-auth-spinner" />
+          <p>Verifying administrator access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (authError) {
+    return (
+      <div className="admin-auth-state">
+        <div className="admin-auth-panel">
+          <h1>Admin Access Unavailable</h1>
+          <p>{authError}</p>
+          <button onClick={() => navigate('/admin/login', { replace: true })}>Back to Admin Login</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="admin-wrapper">
       <aside className="admin-sidebar">
@@ -27,7 +121,7 @@ const AdminLayout = () => {
         </nav>
 
         <div className="admin-bottom">
-          <button className="nav-item logout-btn">
+          <button className="nav-item logout-btn" onClick={handleSignOut}>
             <LogOut size={20} /> Sign Out
           </button>
         </div>
@@ -38,7 +132,7 @@ const AdminLayout = () => {
           <div className="header-title">Admin Control Panel</div>
           <div className="header-profile">
             <div className="avatar">A</div>
-            <span>Super Admin</span>
+            <span>{adminUser?.name || 'Super Admin'}</span>
           </div>
         </header>
 
