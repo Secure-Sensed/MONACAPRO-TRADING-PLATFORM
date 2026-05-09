@@ -22,22 +22,9 @@ const AdminLogin = () => {
       });
 
       if (authError) {
-        // Fallback to local mock for testing
-        if (email === 'admin@moncaplus.com') {
-           navigate('/admin');
-           return;
-        }
         throw new Error(authError.message);
       }
 
-      // SECURITY CHECK: Verify if the user is an admin in Supabase
-      // Master Override for Kyrian based on user request
-      if (email === 'lisawatt101@gmail.com') {
-         navigate('/admin');
-         return;
-      }
-
-      // Assuming you have a 'profiles' table with a 'role' column on your Supabase instance
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role')

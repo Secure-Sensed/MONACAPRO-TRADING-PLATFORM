@@ -6,6 +6,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
   margin-bottom: 24px;
 }
 
@@ -108,3 +109,31 @@
 
 .action-btn.edit:hover { background: #20a0ff; color: #fff; }
 .action-btn.ban:hover { background: #ff4d4f; color: #fff; }
+
+.admin-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 77, 79, 0.35);
+  border-radius: 8px;
+  background: rgba(255, 77, 79, 0.08);
+  color: #ff8a8c;
+  font-size: 14px;
+}
+
+@media (max-width: 900px) {
+  .header-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .search-bar {
+    width: 100%;
+  }
+
+  .table-container {
+    overflow-x: auto;
+  }
+}
