@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -6,6 +6,7 @@ import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { toast } from '../hooks/use-toast';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabaseClient';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -19,6 +20,25 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [registrationsEnabled, setRegistrationsEnabled] = useState(true);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const { data, error } = await supabase
+        .from('platform_settings')
+        .select('registrations_enabled, maintenance_mode')
+        .eq('id', 'default')
+        .maybeSingle();
+
+      if (!error && data) {
+        setRegistrationsEnabled(data.registrations_enabled !== false);
+        setMaintenanceMode(Boolean(data.maintenance_mode));
+      }
+    };
+
+    fetchSettings();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -29,6 +49,15 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!registrationsEnabled || maintenanceMode) {
+      toast({
+        title: 'Registration paused',
+        description: 'New account registration is currently disabled by the platform administrator.',
+        variant: 'destructive'
+      });
+      return;
+    }
     
     if (formData.password !== formData.confirmPassword) {
       toast({
@@ -78,6 +107,11 @@ const Register = () => {
           <CardDescription className="text-gray-400 text-center">
             Start your trading journey today
           </CardDescription>
+          {(!registrationsEnabled || maintenanceMode) && (
+            <p className="rounded-md border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-center text-sm text-amber-200">
+              Registration is temporarily paused.
+            </p>
+          )}
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -155,7 +189,7 @@ const Register = () => {
             </div>
             <Button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || !registrationsEnabled || maintenanceMode}
               className="w-full bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white transition-all"
             >
               {isLoading ? 'Creating Account...' : 'Create Account'}

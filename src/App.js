@@ -1,6 +1,6 @@
 import "./App.css";
 import "./i18n";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -24,9 +24,12 @@ import NotFound from "./pages/NotFound";
 import { Toaster } from "./components/ui/toaster";
 
 function AppRouter() {
+  const location = useLocation();
+  const isAdminArea = location.pathname.startsWith("/admin");
+
   return (
     <>
-      <Navbar />
+      {!isAdminArea && <Navbar />}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -41,7 +44,7 @@ function AppRouter() {
         />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route 
-          path="/admin" 
+          path="/admin/*" 
           element={
             <ProtectedRoute requireAdmin={true}>
               <Admin />
@@ -58,8 +61,8 @@ function AppRouter() {
         <Route path="/news" element={<News />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-      <Footer />
-      <ChatWidget />
+      {!isAdminArea && <Footer />}
+      {!isAdminArea && <ChatWidget />}
       <Toaster />
     </>
   );

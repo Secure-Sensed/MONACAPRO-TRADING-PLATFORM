@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -6,6 +6,13 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Mail, Phone, MapPin, Clock, Send, MessageSquare, Globe } from 'lucide-react';
 import { toast } from '../hooks/use-toast';
+import { supabase } from '../lib/supabaseClient';
+
+const defaultContactSettings = {
+  support_email: 'support@monacaptradingpro.com',
+  support_phone: '+1 (800) 555-0123',
+  support_address: '123 Financial District, Sydney, NSW 2000, Australia'
+};
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -15,6 +22,23 @@ const Contact = () => {
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [contactSettings, setContactSettings] = useState(defaultContactSettings);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const { data, error } = await supabase
+        .from('platform_settings')
+        .select('support_email, support_phone, support_address')
+        .eq('id', 'default')
+        .maybeSingle();
+
+      if (!error && data) {
+        setContactSettings({ ...defaultContactSettings, ...data });
+      }
+    };
+
+    fetchSettings();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -27,35 +51,51 @@ const Contact = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    toast({
-      title: 'Message Sent!',
-      description: 'We will get back to you within 24 hours.'
-    });
-    
-    setFormData({ name: '', email: '', subject: '', message: '' });
-    setIsSubmitting(false);
+    try {
+      const { error } = await supabase.from('contact_messages').insert({
+        name: formData.name,
+        email: formData.email,
+        subject: formData.subject,
+        message: formData.message,
+        status: 'new'
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Message Sent!',
+        description: 'We will get back to you within 24 hours.'
+      });
+
+      setFormData({ name: '', email: '', subject: '', message: '' });
+    } catch (error) {
+      toast({
+        title: 'Message failed',
+        description: error?.message || 'Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const contactInfo = [
     {
       icon: Mail,
       title: 'Email',
-      value: 'support@monacaptradingpro.com',
-      link: 'mailto:support@monacaptradingpro.com'
+      value: contactSettings.support_email,
+      link: `mailto:${contactSettings.support_email}`
     },
     {
       icon: Phone,
       title: 'Phone',
-      value: '+1 (800) 555-0123',
-      link: 'tel:+18005550123'
+      value: contactSettings.support_phone,
+      link: `tel:${contactSettings.support_phone.replace(/[^\d+]/g, '')}`
     },
     {
       icon: MapPin,
       title: 'Address',
-      value: '123 Financial District, Sydney, NSW 2000, Australia',
+      value: contactSettings.support_address,
       link: null
     },
     {

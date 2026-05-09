@@ -19,25 +19,71 @@ import { toast } from '../hooks/use-toast';
 import CopyTraderDialog from '../components/CopyTraderDialog';
 import RealTimeTradingChart from '../components/RealTimeTradingChart';
 
-const DEFAULT_WALLETS = {
-  bitcoin: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-  ethereum: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb8',
-  usdt_trc20: 'TXYZopYRdj2D9XRtbG4uTdwZjX9c2V4h9q',
-  usdt_erc20: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb8',
-  bank_transfer: {
-    bank_name: 'Chase Bank',
-    account_name: 'Monacap Trading Pro LLC',
-    account_number: '1234567890',
-    routing_number: '021000021',
-    swift_code: 'CHASUS33'
-  },
-  paypal: 'payments@monacaptradingpro.com'
-};
-
 const parseNumber = (value, fallback = 0) => {
   if (value === null || value === undefined) return fallback;
   const num = Number(value);
   return Number.isFinite(num) ? num : fallback;
+};
+
+const formatPaymentMethod = (method = '') =>
+  method
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
+const getDepositAccountText = (account) => {
+  if (account === null || account === undefined) return '';
+  if (typeof account === 'string') return account;
+  if (Array.isArray(account)) return account.join('\n');
+  if (typeof account === 'object') {
+    return Object.entries(account)
+      .filter(([, value]) => value !== null && value !== undefined && value !== '')
+      .map(([key, value]) => `${formatPaymentMethod(key)}: ${value}`)
+      .join('\n');
+  }
+  return String(account);
+};
+
+const DepositAccountDetails = ({ account }) => {
+  if (!account) {
+    return (
+      <p className="text-xs text-amber-300">
+        No account is configured for this method yet. Please contact support before sending funds.
+      </p>
+    );
+  }
+
+  if (typeof account === 'object' && !Array.isArray(account)) {
+    return (
+      <div className="space-y-2 rounded-2xl border border-white/10 bg-[#0a1628]/70 p-4">
+        {Object.entries(account)
+          .filter(([, value]) => value !== null && value !== undefined && value !== '')
+          .map(([key, value]) => (
+            <div key={key} className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span className="text-xs uppercase tracking-[0.2em] text-gray-500">{formatPaymentMethod(key)}</span>
+              <span className="text-sm text-gray-200 break-all">{String(value)}</span>
+            </div>
+          ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-[#0a1628]/70 p-4">
+      <p className="text-xs uppercase tracking-[0.2em] text-gray-500 mb-2">Deposit Account</p>
+      <p className="text-sm text-gray-200 break-all">{getDepositAccountText(account)}</p>
+    </div>
+  );
+};
+
+const defaultPlatformSettings = {
+  min_deposit: 250,
+  min_withdrawal: 100,
+  max_withdrawal: 100000,
+  deposits_enabled: true,
+  withdrawals_enabled: true,
+  copy_trading_enabled: true,
+  maintenance_mode: false,
+  announcement: ''
 };
 
 const Dashboard = () => {
@@ -56,6 +102,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState([]);
   const [wallets, setWallets] = useState({});
+  const [platformSettings, setPlatformSettings] = useState(defaultPlatformSettings);
   const [selectedTrader, setSelectedTrader] = useState(null);
   const [showCopyDialog, setShowCopyDialog] = useState(false);
   const [profileForm, setProfileForm] = useState({
@@ -76,9 +123,9 @@ const Dashboard = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
 
-  const MIN_DEPOSIT = 250;
-  const MIN_WITHDRAWAL = 100;
-  const MAX_WITHDRAWAL = 100000;
+  const MIN_DEPOSIT = parseNumber(platformSettings.min_deposit, 250);
+  const MIN_WITHDRAWAL = parseNumber(platformSettings.min_withdrawal, 100);
+  const MAX_WITHDRAWAL = parseNumber(platformSettings.max_withdrawal, 100000);
 
   const handleCopyTrader = (trader) => {
     setSelectedTrader(trader);
@@ -100,7 +147,7 @@ const Dashboard = () => {
     if (!user?.user_id) return;
     try {
       const refreshed = await refreshUser();
-      const balance = parseNumber(refreshed?.balance ?? user?.balance, 0);
+      const balance = parseNumber(refreshed?.balance, 0);
 
       const { data: activeCopies, error: copiesError } = await supabase
         .from('copy_trades')
@@ -142,7 +189,7 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [user?.user_id, user?.balance, refreshUser]);
+  }, [user?.user_id, refreshUser]);
 
   const fetchLeadTraders = useCallback(async () => {
     try {
@@ -182,38 +229,41 @@ const Dashboard = () => {
       const response = await fetch(
         'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,binancecoin,cardano,solana&vs_currencies=usd&include_24hr_change=true'
       );
+      if (!response.ok) {
+        throw new Error(`Market data request failed with status ${response.status}`);
+      }
       const data = await response.json();
       
       const prices = [
         { 
           name: 'Bitcoin', 
           symbol: 'BTC', 
-          price: data.bitcoin.usd, 
-          change: data.bitcoin.usd_24h_change 
+          price: data.bitcoin?.usd || 0, 
+          change: data.bitcoin?.usd_24h_change || 0 
         },
         { 
           name: 'Ethereum', 
           symbol: 'ETH', 
-          price: data.ethereum.usd, 
-          change: data.ethereum.usd_24h_change 
+          price: data.ethereum?.usd || 0, 
+          change: data.ethereum?.usd_24h_change || 0 
         },
         { 
           name: 'BNB', 
           symbol: 'BNB', 
-          price: data.binancecoin.usd, 
-          change: data.binancecoin.usd_24h_change 
+          price: data.binancecoin?.usd || 0, 
+          change: data.binancecoin?.usd_24h_change || 0 
         },
         { 
           name: 'Cardano', 
           symbol: 'ADA', 
-          price: data.cardano.usd, 
-          change: data.cardano.usd_24h_change 
+          price: data.cardano?.usd || 0, 
+          change: data.cardano?.usd_24h_change || 0 
         },
         { 
           name: 'Solana', 
           symbol: 'SOL', 
-          price: data.solana.usd, 
-          change: data.solana.usd_24h_change 
+          price: data.solana?.usd || 0, 
+          change: data.solana?.usd_24h_change || 0 
         }
       ];
       
@@ -266,13 +316,32 @@ const Dashboard = () => {
       if (error) {
         console.error('Error fetching wallets:', error.message || error);
       }
-      const walletMap = { ...DEFAULT_WALLETS };
+      const walletMap = {};
       (data || []).forEach((row) => {
         walletMap[row.method] = row.address;
       });
       setWallets(walletMap);
     } catch (error) {
       console.error('Error fetching wallets:', error);
+    }
+  }, []);
+
+  const fetchPlatformSettings = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('platform_settings')
+        .select('*')
+        .eq('id', 'default')
+        .maybeSingle();
+      if (error) {
+        console.warn('Error fetching platform settings:', error.message || error);
+        return;
+      }
+      if (data) {
+        setPlatformSettings({ ...defaultPlatformSettings, ...data });
+      }
+    } catch (error) {
+      console.warn('Error fetching platform settings:', error);
     }
   }, []);
 
@@ -283,16 +352,114 @@ const Dashboard = () => {
   }, [fetchCryptoPrices]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.user_id) return;
     fetchDashboardData();
     fetchLeadTraders();
     fetchTransactions();
     fetchWallets();
-  }, [user, fetchDashboardData, fetchLeadTraders, fetchTransactions, fetchWallets]);
+    fetchPlatformSettings();
+  }, [user?.user_id, fetchDashboardData, fetchLeadTraders, fetchPlatformSettings, fetchTransactions, fetchWallets]);
+
+  useEffect(() => {
+    const methods = Object.keys(wallets);
+    if (methods.length === 0) {
+      setDepositForm((current) => (
+        current.method === '' ? current : { ...current, method: '' }
+      ));
+      setWithdrawForm((current) => (
+        current.method === '' ? current : { ...current, method: '' }
+      ));
+      return;
+    }
+
+    setDepositForm((current) => (
+      wallets[current.method] ? current : { ...current, method: methods[0] }
+    ));
+    setWithdrawForm((current) => (
+      wallets[current.method] ? current : { ...current, method: methods[0] }
+    ));
+  }, [wallets]);
+
+  useEffect(() => {
+    if (!user?.user_id) return undefined;
+
+    const refreshTransactionsAndPortfolio = () => {
+      fetchTransactions();
+      fetchDashboardData();
+    };
+
+    const channel = supabase
+      .channel(`dashboard-realtime:${user.user_id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${user.user_id}`
+        },
+        fetchDashboardData
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'transactions',
+          filter: `user_id=eq.${user.user_id}`
+        },
+        refreshTransactionsAndPortfolio
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'copy_trades',
+          filter: `user_id=eq.${user.user_id}`
+        },
+        fetchDashboardData
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'wallet_addresses' },
+        fetchWallets
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'traders' },
+        fetchLeadTraders
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'platform_settings' },
+        fetchPlatformSettings
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [
+    fetchDashboardData,
+    fetchLeadTraders,
+    fetchPlatformSettings,
+    fetchTransactions,
+    fetchWallets,
+    user?.user_id,
+  ]);
 
   const handleDeposit = async (e) => {
     e.preventDefault();
     const amount = Number(depositForm.amount);
+    if (!platformSettings.deposits_enabled || platformSettings.maintenance_mode) {
+      toast({
+        title: 'Deposits paused',
+        description: 'Deposits are currently disabled by the platform administrator.',
+        variant: 'destructive'
+      });
+      return;
+    }
     if (!Number.isFinite(amount) || amount <= 0) {
       toast({
         title: 'Invalid amount',
@@ -309,13 +476,27 @@ const Dashboard = () => {
       });
       return;
     }
+    const depositAccount = wallets[depositForm.method];
+    if (!depositAccount) {
+      toast({
+        title: 'Deposit account unavailable',
+        description: 'No admin-provided account is configured for this payment method yet.',
+        variant: 'destructive'
+      });
+      return;
+    }
     setActionLoading(true);
     try {
       const { error } = await supabase.from('transactions').insert({
         user_id: user.user_id,
         type: 'deposit',
         amount,
-        method: depositForm.method
+        method: depositForm.method,
+        status: 'pending',
+        to_address: typeof depositAccount === 'string' ? depositAccount : null,
+        details: {
+          deposit_account: depositAccount
+        }
       });
 
       if (error) {
@@ -343,6 +524,14 @@ const Dashboard = () => {
   const handleWithdrawal = async (e) => {
     e.preventDefault();
     const amount = Number(withdrawForm.amount);
+    if (!platformSettings.withdrawals_enabled || platformSettings.maintenance_mode) {
+      toast({
+        title: 'Withdrawals paused',
+        description: 'Withdrawals are currently disabled by the platform administrator.',
+        variant: 'destructive'
+      });
+      return;
+    }
     if (!Number.isFinite(amount) || amount <= 0) {
       toast({
         title: 'Invalid amount',
@@ -382,6 +571,7 @@ const Dashboard = () => {
         type: 'withdrawal',
         amount,
         method: withdrawForm.method,
+        status: 'pending',
         details: {
           address: withdrawForm.address
         }
@@ -438,6 +628,9 @@ const Dashboard = () => {
     if (!selectedTrader?.trader_id) {
       return { success: false, error: 'Select a trader to copy.' };
     }
+    if (!platformSettings.copy_trading_enabled || platformSettings.maintenance_mode) {
+      return { success: false, error: 'Copy trading is currently disabled by the platform administrator.' };
+    }
     if (!user?.user_id) {
       return { success: false, error: 'Please log in to start copying.' };
     }
@@ -466,9 +659,30 @@ const Dashboard = () => {
     navigate('/login');
   };
 
+  const handleCopyDepositAccount = async () => {
+    const accountText = getDepositAccountText(wallets[depositForm.method]);
+    if (!accountText) return;
+
+    try {
+      await navigator.clipboard.writeText(accountText);
+      toast({
+        title: 'Deposit account copied',
+        description: 'Use these exact details when sending your deposit.'
+      });
+    } catch (error) {
+      toast({
+        title: 'Copy failed',
+        description: 'Select and copy the account details manually.',
+        variant: 'destructive'
+      });
+    }
+  };
+
   const initials = user?.full_name
     ? user.full_name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()
     : 'MP';
+  const walletMethods = Object.keys(wallets);
+  const selectedDepositAccount = wallets[depositForm.method];
 
   if (loading) {
     return (
@@ -548,6 +762,14 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {(platformSettings.maintenance_mode || platformSettings.announcement) && (
+          <div className="mb-8 rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm text-amber-100">
+            {platformSettings.maintenance_mode
+              ? 'Platform maintenance mode is active. Funding and copy trading actions may be paused.'
+              : platformSettings.announcement}
+          </div>
+        )}
+
         {/* Portfolio Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           {[
@@ -605,7 +827,7 @@ const Dashboard = () => {
         {/* Real-Time Trading Chart */}
         <div className="mb-10 rounded-[32px] p-[1px] bg-gradient-to-r from-white/10 via-white/5 to-white/10">
           <div className="rounded-[32px] bg-[#0b1220]/80 border border-white/5 backdrop-blur-xl p-4">
-            <RealTimeTradingChart symbol="BTC/USD" interval={1000} />
+            <RealTimeTradingChart symbol="BTC/USD" interval={30000} />
           </div>
         </div>
 
@@ -723,6 +945,7 @@ const Dashboard = () => {
                       <Button 
                         className="w-full bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white"
                         onClick={() => handleCopyTrader(trader)}
+                        disabled={!platformSettings.copy_trading_enabled || platformSettings.maintenance_mode}
                       >
                         Copy Trader
                       </Button>
@@ -795,24 +1018,32 @@ const Dashboard = () => {
                         value={depositForm.method}
                         onChange={(e) => setDepositForm({ ...depositForm, method: e.target.value })}
                         className="w-full bg-[#0a1628] border border-gray-600 text-white rounded-md px-3 py-2"
+                        disabled={walletMethods.length === 0}
                       >
-                        {Object.keys(wallets).length === 0 && <option value="bitcoin">bitcoin</option>}
-                        {Object.keys(wallets).map((method) => (
+                        {walletMethods.length === 0 && <option value="">No deposit accounts configured</option>}
+                        {walletMethods.map((method) => (
                           <option key={method} value={method}>
-                            {method.replace(/_/g, ' ')}
+                            {formatPaymentMethod(method)}
                           </option>
                         ))}
                       </select>
-                      {wallets[depositForm.method] && (
-                        <p className="text-xs text-gray-400 break-all">
-                          Deposit address: {typeof wallets[depositForm.method] === 'string' ? wallets[depositForm.method] : JSON.stringify(wallets[depositForm.method])}
-                        </p>
+                      <DepositAccountDetails account={selectedDepositAccount} />
+                      {selectedDepositAccount && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleCopyDepositAccount}
+                          className="w-full border-white/20 text-white hover:bg-white/10"
+                        >
+                          <Copy className="w-4 h-4 mr-2" />
+                          Copy Deposit Details
+                        </Button>
                       )}
                       <p className="text-xs text-gray-500">Minimum deposit: ${MIN_DEPOSIT}</p>
                     </div>
                     <Button
                       type="submit"
-                      disabled={actionLoading}
+                      disabled={actionLoading || walletMethods.length === 0 || !platformSettings.deposits_enabled || platformSettings.maintenance_mode}
                       className="w-full bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white"
                     >
                       Submit Deposit
@@ -845,11 +1076,12 @@ const Dashboard = () => {
                         value={withdrawForm.method}
                         onChange={(e) => setWithdrawForm({ ...withdrawForm, method: e.target.value })}
                         className="w-full bg-[#0a1628] border border-gray-600 text-white rounded-md px-3 py-2"
+                        disabled={walletMethods.length === 0}
                       >
-                        {Object.keys(wallets).length === 0 && <option value="bitcoin">bitcoin</option>}
-                        {Object.keys(wallets).map((method) => (
+                        {walletMethods.length === 0 && <option value="">No withdrawal methods configured</option>}
+                        {walletMethods.map((method) => (
                           <option key={method} value={method}>
-                            {method.replace(/_/g, ' ')}
+                            {formatPaymentMethod(method)}
                           </option>
                         ))}
                       </select>
@@ -869,7 +1101,7 @@ const Dashboard = () => {
                     </div>
                     <Button
                       type="submit"
-                      disabled={actionLoading}
+                      disabled={actionLoading || walletMethods.length === 0 || !platformSettings.withdrawals_enabled || platformSettings.maintenance_mode}
                       className="w-full bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white"
                     >
                       Submit Withdrawal
